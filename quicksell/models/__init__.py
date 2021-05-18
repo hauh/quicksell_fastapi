@@ -1,3 +1,3 @@
 """Database models."""
 
-from .user import User
+from .user import Device, Profile, User
