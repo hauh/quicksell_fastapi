@@ -20,7 +20,7 @@ class User(ModelBase):
 
 	id = Column(Integer, primary_key=True, index=True)
 	email = Column(String, unique=True, index=True)
-	auth_token = Column(String, index=True)
+	access_token = Column(String, index=True)
 	password_hash = Column(String)
 
 	ts_spawn = Column(TIMESTAMP, server_default=func.now())

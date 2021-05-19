@@ -30,6 +30,7 @@ class UserRetrieve(BaseModel):
 	ts_spawn: datetime
 	balance: int
 	profile: ProfileRetrieve
+	access_token: Optional[str]
 
 	class Config:
 		orm_mode = True
