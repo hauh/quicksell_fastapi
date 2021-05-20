@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
+from starlette.status import HTTP_201_CREATED
 
 from quicksell.authorization import (
 	check_password, generate_access_token, get_current_user, hash_password
@@ -19,7 +20,7 @@ def current_user(user: User = Depends(get_current_user)):
 	return user
 
 
-@router.post('/', response_model=UserRetrieve)
+@router.post('/', response_model=UserRetrieve, status_code=HTTP_201_CREATED)
 def create_user(body: UserCreate, db: Session = Depends(get_session)):
 	if profile := db.query(Profile).filter(Profile.phone == body.phone).first():
 		return profile.user
