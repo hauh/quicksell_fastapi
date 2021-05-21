@@ -3,10 +3,12 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr
+from pydantic import EmailStr
+
+from .base import RequestSchema, ResponseSchema
 
 
-class ProfileRetrieve(BaseModel):
+class ProfileRetrieve(ResponseSchema):
 	"""Profile response schema."""
 
 	uuid: str
@@ -17,11 +19,8 @@ class ProfileRetrieve(BaseModel):
 	avatar: Optional[str]
 	location: Optional[str]
 
-	class Config:
-		orm_mode = True
 
-
-class UserRetrieve(BaseModel):
+class UserRetrieve(ResponseSchema):
 	"""User response schema."""
 
 	email: str
@@ -31,11 +30,8 @@ class UserRetrieve(BaseModel):
 	profile: ProfileRetrieve
 	access_token: Optional[str]
 
-	class Config:
-		orm_mode = True
 
-
-class UserCreate(BaseModel):
+class UserCreate(RequestSchema):
 	"""User creation schema."""
 
 	email: EmailStr
@@ -43,6 +39,3 @@ class UserCreate(BaseModel):
 	full_name: str
 	fcm_id: str
 	phone: str
-
-	class Config:
-		anystr_strip_whitespace = True

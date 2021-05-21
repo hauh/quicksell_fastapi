@@ -3,14 +3,13 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
-
 from quicksell.models import Listing
 
+from .base import RequestSchema, ResponseSchema
 from .user import ProfileRetrieve
 
 
-class ListingRetrieve(BaseModel):
+class ListingRetrieve(ResponseSchema):
 	"""Listing response schema."""
 
 	uuid: str
@@ -30,11 +29,8 @@ class ListingRetrieve(BaseModel):
 	photos: Optional[str]
 	seller: ProfileRetrieve
 
-	class Config:
-		orm_mode = True
 
-
-class ListingCreate(BaseModel):
+class ListingCreate(RequestSchema):
 	"""Listing creation schema."""
 
 	title: str
@@ -44,11 +40,8 @@ class ListingCreate(BaseModel):
 	category: str
 	quantity: Optional[int]
 
-	class Config:
-		anystr_strip_whitespace = True
 
-
-class ListingUpdate(BaseModel):
+class ListingUpdate(RequestSchema):
 	"""Listing update schema."""
 
 	title: Optional[str]
@@ -57,6 +50,3 @@ class ListingUpdate(BaseModel):
 	is_new: Optional[bool]
 	category: Optional[str]
 	quantity: Optional[int]
-
-	class Config:
-		anystr_strip_whitespace = True

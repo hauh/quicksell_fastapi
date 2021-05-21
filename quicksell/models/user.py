@@ -5,24 +5,17 @@ from uuid import uuid4
 
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import Column, ForeignKey
-from sqlalchemy.sql import func
-from sqlalchemy.types import (
-	TIMESTAMP, Boolean, Enum, Integer, SmallInteger, String
-)
+from sqlalchemy.types import Boolean, Enum, Integer, SmallInteger, String
 
-from quicksell.database import ModelBase
+from .base import Model
 
 
-class User(ModelBase):
+class User(Model):
 	"""User model."""
-	__tablename__ = 'User'
 
-	id = Column(Integer, primary_key=True, index=True)
 	email = Column(String, unique=True, nullable=False, index=True)
 	access_token = Column(String, index=True)
 	password_hash = Column(String, nullable=False)
-
-	ts_spawn = Column(TIMESTAMP, nullable=False, server_default=func.now())
 
 	is_active = Column(Boolean, nullable=False, default=True)
 	is_email_verified = Column(Boolean, nullable=False, default=False)
@@ -38,11 +31,9 @@ class User(ModelBase):
 	device = relationship('Device', backref='owner', uselist=False)
 
 
-class Profile(ModelBase):
+class Profile(Model):
 	"""User's profile model."""
-	__tablename__ = 'Profile'
 
-	id = Column(Integer, primary_key=True, index=True)
 	user_id = Column(Integer, ForeignKey('User.id'), nullable=False, index=True)
 	uuid = Column(String, nullable=False, default=lambda: uuid4().hex)
 
@@ -58,9 +49,8 @@ class Profile(ModelBase):
 	listings = relationship('Listing', backref='seller')
 
 
-class Device(ModelBase):
+class Device(Model):
 	"""User's device model."""
-	__tablename__ = 'Device'
 
 	class Platform(enum.Enum):
 		"""Device platform."""
@@ -69,7 +59,6 @@ class Device(ModelBase):
 		android = 1, 'Android'
 		ios = 2, 'iOS'
 
-	id = Column(Integer, primary_key=True, index=True)
 	owner_id = Column(Integer, ForeignKey('User.id'), nullable=False, index=True)
 	fcm_id = Column(String, nullable=False, index=True)
 	platform = Column(Enum(Platform), nullable=False, default=Platform.other)
