@@ -1,12 +1,13 @@
 """Listings related API schemas."""
 
 from datetime import datetime
-from typing import Optional
+from typing import ForwardRef, Optional
 
 from quicksell.models import Listing
 
 from .base import RequestSchema, ResponseSchema
-from .user import ProfileRetrieve
+
+ProfileRetrieve = ForwardRef('ProfileRetrieve')
 
 
 class ListingRetrieve(ResponseSchema):

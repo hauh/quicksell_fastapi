@@ -1,6 +1,6 @@
 """api/listings/"""
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from starlette.status import HTTP_201_CREATED, HTTP_204_NO_CONTENT
 
 from quicksell.authorization import get_current_user
@@ -93,7 +93,7 @@ def update_listing(
 	return listing
 
 
-@router.delete('/{uuid}/', status_code=HTTP_204_NO_CONTENT)
+@router.delete('/{uuid}/', response_class=Response, status_code=HTTP_204_NO_CONTENT)  # noqa
 def delete_listing(
 	listing: Listing = Depends(fetch_listing),
 	user: User = Depends(get_current_user),

@@ -1,13 +1,12 @@
 """Users related database models."""
 
 import enum
-from uuid import uuid4
 
 from sqlalchemy.orm import relationship
-from sqlalchemy.schema import Column, ForeignKey
+from sqlalchemy.schema import Column
 from sqlalchemy.types import Boolean, Enum, Integer, SmallInteger, String
 
-from .base import Model
+from .base import Model, UUIDColumn, association, foreign_key
 
 
 class User(Model):
@@ -27,15 +26,17 @@ class User(Model):
 
 	balance = Column(Integer, nullable=False, default=0)
 
-	profile = relationship('Profile', backref='user', uselist=False)
-	device = relationship('Device', backref='owner', uselist=False)
+	profile = relationship(
+		'Profile', back_populates='user', lazy=False, uselist=False
+	)
+	device = relationship('Device', back_populates='owner', uselist=False)
 
 
 class Profile(Model):
 	"""User's profile model."""
 
-	user_id = Column(Integer, ForeignKey('User.id'), nullable=False, index=True)
-	uuid = Column(String, nullable=False, default=lambda: uuid4().hex)
+	uuid = UUIDColumn()
+	user_id = foreign_key('User')
 
 	phone = Column(String, unique=True, nullable=False, index=True)
 	full_name = Column(String, nullable=False)
@@ -46,7 +47,20 @@ class Profile(Model):
 	avatar = Column(String)
 
 	location = Column(String)
-	listings = relationship('Listing', backref='seller')
+
+	user = relationship('User', back_populates='profile', uselist=False)
+	listings = relationship(
+		'Listing',
+		back_populates='seller',
+		lazy='dynamic',
+		order_by='desc(Listing.ts_spawn)'
+	)
+	chats = association(
+		'Profile', 'Chat',
+		back_populates='members',
+		lazy='dynamic',
+		order_by='desc(Chat.ts_update)'
+	)
 
 
 class Device(Model):
@@ -59,9 +73,11 @@ class Device(Model):
 		android = 1, 'Android'
 		ios = 2, 'iOS'
 
-	owner_id = Column(Integer, ForeignKey('User.id'), nullable=False, index=True)
+	owner_id = foreign_key('User')
 	fcm_id = Column(String, nullable=False, index=True)
 	platform = Column(Enum(Platform), nullable=False, default=Platform.other)
 
 	is_active = Column(Boolean, nullable=False, default=True)
 	fails_count = Column(SmallInteger, nullable=False, default=0)
+
+	owner = relationship('User', back_populates='device', uselist=False)

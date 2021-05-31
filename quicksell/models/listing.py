@@ -2,13 +2,12 @@
 
 import enum
 from datetime import datetime, timedelta
-from uuid import uuid4
 
+from sqlalchemy.orm import relationship
 from sqlalchemy.schema import Column
-from sqlalchemy.schema import ForeignKey as FK
 from sqlalchemy.types import JSON, TIMESTAMP, Boolean, Enum, Integer, String
 
-from .base import Model
+from .base import Model, UUIDColumn, foreign_key
 
 DEFAULT_LISTING_EXPIRATION_TIME = timedelta(days=30)
 
@@ -29,8 +28,8 @@ class Listing(Model):
 		closed = 3, 'Closed'
 		deleted = 4, 'Deleted'
 
-	seller_id = Column(Integer, FK('Profile.id'), nullable=False, index=True)
-	uuid = Column(String, nullable=False, default=lambda: uuid4().hex, index=True)
+	uuid = UUIDColumn()
+	seller_id = foreign_key('Profile')
 	state = Column(Enum(State), nullable=False, default=State.active)
 
 	ts_expires = Column(TIMESTAMP, nullable=False, default=set_expiration_date)
@@ -48,3 +47,5 @@ class Listing(Model):
 	category = Column(String, nullable=False, default='No category')
 	location = Column(String)
 	photos = Column(String)
+
+	seller = relationship('Profile', lazy=False)

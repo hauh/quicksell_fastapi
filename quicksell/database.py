@@ -1,18 +1,18 @@
 """Database setup and connection."""
 
-from sqlalchemy import create_engine
+from sqlalchemy.engine import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 engine = create_engine(
 	"sqlite:///./sql_app.db",
-	connect_args={"check_same_thread": False}
+	connect_args={"check_same_thread": False},
+	future=True
 )
-make_session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+session_maker = sessionmaker(
+	autocommit=False, autoflush=False, bind=engine, future=True
+)
 
 
 def get_session() -> Session:
-	try:
-		s = make_session()
-		yield s
-	finally:
-		s.close()
+	with session_maker() as session:
+		yield session

@@ -3,6 +3,17 @@
 from fastapi import HTTPException, status
 
 
+class BadRequest(HTTPException):
+	"""400"""
+
+	def __init__(self, detail: str = None, headers: dict = None):
+		super().__init__(
+			status.HTTP_400_BAD_REQUEST,
+			detail or "Bad request",
+			headers
+		)
+
+
 class Unauthorized(HTTPException):
 	"""401"""
 
@@ -31,6 +42,6 @@ class NotFound(HTTPException):
 	def __init__(self, detail: str = None, headers: dict = None):
 		super().__init__(
 			status.HTTP_404_NOT_FOUND,
-			detail or "Object not found",
+			detail or "Resource not found",
 			headers
 		)

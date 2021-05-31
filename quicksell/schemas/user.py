@@ -16,6 +16,7 @@ class ProfileRetrieve(ResponseSchema):
 	about: str
 	online: bool
 	rating: int
+	phone: str
 	avatar: Optional[str]
 	location: Optional[str]
 
