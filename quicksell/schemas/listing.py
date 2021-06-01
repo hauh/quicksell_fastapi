@@ -3,6 +3,8 @@
 from datetime import datetime
 from typing import ForwardRef, Optional
 
+from pydantic import validator
+
 from quicksell.models import Listing
 
 from .base import RequestSchema, ResponseSchema
@@ -29,6 +31,10 @@ class ListingRetrieve(ResponseSchema):
 	location: Optional[str]
 	photos: Optional[str]
 	seller: ProfileRetrieve
+
+	@validator('category', pre=True)
+	def category_name(cls, category):  # pylint: disable=no-self-argument
+		return category.name
 
 
 class ListingCreate(RequestSchema):

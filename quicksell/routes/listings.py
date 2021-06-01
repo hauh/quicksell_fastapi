@@ -5,8 +5,8 @@ from starlette.status import HTTP_201_CREATED, HTTP_204_NO_CONTENT
 
 from quicksell.authorization import get_current_user
 from quicksell.database import Session, get_session
-from quicksell.exceptions import Forbidden, NotFound
-from quicksell.models import Listing, Profile, User
+from quicksell.exceptions import BadRequest, Forbidden, NotFound
+from quicksell.models import Category, Listing, Profile, User
 from quicksell.schemas import ListingCreate, ListingRetrieve, ListingUpdate
 
 router = APIRouter(prefix='/listings', tags=['Listings'])
@@ -33,8 +33,7 @@ def get_listings_list(  # pylint: disable=too-many-arguments
 	page: int = 0,
 	db: Session = Depends(get_session)
 ):
-	query = db.query(Listing).join(Profile)
-
+	query = db.query(Listing)
 	filters = []
 	if title and len(title) > 3:
 		filters.append(Listing.title.like(f'%{title}%'))
@@ -45,8 +44,10 @@ def get_listings_list(  # pylint: disable=too-many-arguments
 	if is_new is not None:
 		filters.append(Listing.is_new == is_new)
 	if category:
-		filters.append(Listing.category == category)
+		query = query.join(Category, Listing.category_id == Category.id)
+		filters.append(Category.name == category)
 	if seller:
+		query = query.join(Profile, Listing.seller_id == Profile.id)
 		filters.append(Profile.uuid == seller)
 	query = query.filter(*filters)
 
@@ -66,10 +67,33 @@ def create_listing(
 	db: Session = Depends(get_session)
 ):
 	params = body.dict(exclude_unset=True, exclude_none=True)
-	listing = Listing(**params, seller=user.profile)
+	category_name = params.pop('category')
+	category = db.query(Category).filter(Category.name == category_name).first()
+	if not category or not category.assignable:
+		raise BadRequest("Invalid category")
+	listing = Listing(**params, category=category, seller=user.profile)
 	db.add(listing)
 	db.commit()
 	return listing
+
+
+@router.get('/categories/')
+def categories_tree(db: Session = Depends(get_session)):
+	if Category.cached_tree:
+		return Category.cached_tree
+	categories = {cat.id: cat for cat in db.query(Category).all()}
+	tree = {}
+	for category in categories.values():
+		category_branch = {}
+		tree[category.name] = category_branch
+		if category.parent_id:
+			parent_name = categories[category.parent_id].name
+			tree.setdefault(parent_name, {})[category.name] = category_branch
+	for category in categories.values():
+		if category.parent_id:
+			tree.pop(category.name)
+	Category.cached_tree = tree
+	return tree
 
 
 @router.get('/{uuid}/', response_model=ListingRetrieve)
