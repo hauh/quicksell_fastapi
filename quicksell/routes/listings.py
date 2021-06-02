@@ -66,7 +66,10 @@ def create_listing(
 	user: User = Depends(get_current_user),
 	db: Session = Depends(get_session)
 ):
-	params = body.dict(exclude_unset=True, exclude_none=True)
+	params = body.dict()
+	params['location'] = params.get('location') or user.profile.location
+	if not params['location']:
+		raise BadRequest("Location not provided and user didn't set a default one")
 	category_name = params.pop('category')
 	category = db.query(Category).filter(Category.name == category_name).first()
 	if not category or not category.assignable:
@@ -110,8 +113,8 @@ def update_listing(
 ):
 	if listing.seller is not user.profile:
 		raise Forbidden()
-	params = body.dict(exclude_unset=True, exclude_none=True)
-	for field, value in params.items():
+	params = body.dict()
+	for field, value in params.items():  # TODO: validate category
 		setattr(listing, field, value)
 	db.commit()
 	return listing

@@ -18,7 +18,6 @@ class ProfileRetrieve(ResponseSchema):
 	rating: int
 	phone: str
 	avatar: Optional[str]
-	location: Optional[str]
 
 
 class UserRetrieve(ResponseSchema):

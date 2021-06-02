@@ -7,7 +7,7 @@ from pydantic import validator
 
 from quicksell.models import Listing
 
-from .base import RequestSchema, ResponseSchema
+from .base import LocationSchema, RequestSchema, ResponseSchema
 
 ProfileRetrieve = ForwardRef('ProfileRetrieve')
 
@@ -28,8 +28,8 @@ class ListingRetrieve(ResponseSchema):
 	properties: Optional[str]
 	sold: int
 	views: int
-	location: Optional[str]
 	photos: Optional[str]
+	location: Optional[LocationSchema]
 	seller: ProfileRetrieve
 
 	@validator('category', pre=True)
@@ -46,6 +46,7 @@ class ListingCreate(RequestSchema):
 	is_new: bool
 	category: str
 	quantity: Optional[int]
+	location: Optional[LocationSchema]
 
 
 class ListingUpdate(RequestSchema):
@@ -57,3 +58,4 @@ class ListingUpdate(RequestSchema):
 	is_new: Optional[bool]
 	category: Optional[str]
 	quantity: Optional[int]
+	location: Optional[LocationSchema]

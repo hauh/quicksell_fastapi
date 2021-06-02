@@ -8,7 +8,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.schema import Column
 from sqlalchemy.types import JSON, TIMESTAMP, Boolean, Enum, Integer, String
 
-from .base import Model, UUIDColumn, foreign_key
+from .base import LocationMixin, Model, UUIDColumn, foreign_key
 
 DEFAULT_LISTING_EXPIRATION_TIME = timedelta(days=30)
 
@@ -17,7 +17,7 @@ def set_expiration_date():
 	return datetime.now() + DEFAULT_LISTING_EXPIRATION_TIME
 
 
-class Listing(Model):
+class Listing(Model, LocationMixin):
 	"""Listing model."""
 
 	class State(enum.Enum):
@@ -30,10 +30,10 @@ class Listing(Model):
 		deleted = 4, 'Deleted'
 
 	uuid = UUIDColumn()
-	seller_id = foreign_key('Profile')
+	seller_id = foreign_key('Profile', nullable=False)
 	category_id = foreign_key('Category', nullable=False)
-	state = Column(Enum(State), nullable=False, default=State.active)
 
+	state = Column(Enum(State), nullable=False, default=State.active)
 	ts_expires = Column(TIMESTAMP, nullable=False, default=set_expiration_date)
 
 	title = Column(String, nullable=False)
@@ -46,7 +46,6 @@ class Listing(Model):
 	sold = Column(Integer, nullable=False, default=0)
 	views = Column(Integer, nullable=False, default=0)
 
-	location = Column(String)
 	photos = Column(String)
 
 	seller = relationship('Profile', lazy=False)

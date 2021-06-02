@@ -8,7 +8,7 @@ from quicksell.database import engine, session_maker
 from quicksell.models import Category, Model
 from quicksell.routes import chats_router, listings_router, users_router
 
-app = FastAPI(title="Quickell API", version='0.2.6')
+app = FastAPI(title="Quickell API", version='0.2.7')
 app.include_router(chats_router)
 app.include_router(listings_router)
 app.include_router(users_router)

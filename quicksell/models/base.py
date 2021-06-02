@@ -7,7 +7,7 @@ from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import Column, ForeignKey, Table
 from sqlalchemy.sql import func
-from sqlalchemy.types import BigInteger, Integer, String
+from sqlalchemy.types import BigInteger, Float, Integer, String
 
 
 class Base:
@@ -23,6 +23,32 @@ class Base:
 
 
 Model = declarative_base(cls=Base)
+
+
+class LocationMixin:
+	"""Physical location of object."""
+
+	latitude = Column(Float, index=True)
+	longitude = Column(Float, index=True)
+	address = Column(String)
+
+	location = property()
+
+	@location.setter
+	def location(self, location_dict):
+		self.latitude = location_dict['latitude']
+		self.longitude = location_dict['longitude']
+		self.address = location_dict['address']
+
+	@location.getter
+	def location(self):
+		if not self.address:
+			return None
+		return {
+			'latitude': self.latitude,
+			'longitude': self.longitude,
+			'address': self.address
+		}
 
 
 def association(table_from, table_to, **kwargs):
