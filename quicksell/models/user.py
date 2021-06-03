@@ -6,7 +6,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.schema import Column
 from sqlalchemy.types import Boolean, Enum, Integer, SmallInteger, String
 
-from .base import LocationMixin, Model, UUIDColumn, association, foreign_key
+from .base import LocationMixin, Model, UUIDMixin, association, foreign_key
 
 
 class User(Model):
@@ -32,10 +32,9 @@ class User(Model):
 	device = relationship('Device', back_populates='owner', uselist=False)
 
 
-class Profile(Model, LocationMixin):
+class Profile(Model, UUIDMixin, LocationMixin):
 	"""User's profile model."""
 
-	uuid = UUIDColumn()
 	user_id = foreign_key('User')
 
 	phone = Column(String, unique=True, nullable=False, index=True)

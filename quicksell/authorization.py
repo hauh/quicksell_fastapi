@@ -1,6 +1,6 @@
 """API authorization."""
 
-import os
+from os import environ
 from time import time
 
 import bcrypt
@@ -12,7 +12,7 @@ from quicksell.database import Session, get_session
 from quicksell.exceptions import Unauthorized
 from quicksell.models import User
 
-SECRET_KEY = os.environ['SECRET_KEY']
+SECRET_KEY = environ['SECRET_KEY']
 
 authorization = OAuth2PasswordBearer(tokenUrl='/users/auth/')
 

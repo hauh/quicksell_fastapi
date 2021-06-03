@@ -1,23 +1,21 @@
 """Listings related database models."""
 
 import enum
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from sqlalchemy import event
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import Column
-from sqlalchemy.types import JSON, TIMESTAMP, Boolean, Enum, Integer, String
+from sqlalchemy.types import BigInteger, Boolean, Enum, Integer, String
 
-from .base import LocationMixin, Model, UUIDColumn, foreign_key
+from .base import LocationMixin, Model, UUIDMixin, foreign_key, sql_ts_now
 
-DEFAULT_LISTING_EXPIRATION_TIME = timedelta(days=30)
-
-
-def set_expiration_date():
-	return datetime.now() + DEFAULT_LISTING_EXPIRATION_TIME
+DEFAULT_LISTING_EXPIRY_TIME = timedelta(days=30).total_seconds()
+sql_ts_expires = sql_ts_now + DEFAULT_LISTING_EXPIRY_TIME
 
 
-class Listing(Model, LocationMixin):
+class Listing(Model, UUIDMixin, LocationMixin):
 	"""Listing model."""
 
 	class State(enum.Enum):
@@ -29,19 +27,18 @@ class Listing(Model, LocationMixin):
 		closed = 3, 'Closed'
 		deleted = 4, 'Deleted'
 
-	uuid = UUIDColumn()
 	seller_id = foreign_key('Profile', nullable=False)
 	category_id = foreign_key('Category', nullable=False)
 
 	state = Column(Enum(State), nullable=False, default=State.active)
-	ts_expires = Column(TIMESTAMP, nullable=False, default=set_expiration_date)
+	ts_expires = Column(BigInteger, nullable=False, server_default=sql_ts_expires)
 
 	title = Column(String, nullable=False)
 	description = Column(String, nullable=False, default='')
 	price = Column(Integer, nullable=False, default=0)
 	is_new = Column(Boolean, nullable=False, default=False)
 	quantity = Column(Integer, nullable=False, default=1)
-	properties = Column(JSON)
+	properties = Column(JSONB)
 
 	sold = Column(Integer, nullable=False, default=0)
 	views = Column(Integer, nullable=False, default=0)

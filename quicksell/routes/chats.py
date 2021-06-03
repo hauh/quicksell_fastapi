@@ -1,5 +1,7 @@
 """api/chats/"""
 
+from uuid import UUID
+
 from fastapi import APIRouter, Body, Depends, Response
 from starlette.status import HTTP_201_CREATED, HTTP_204_NO_CONTENT
 
@@ -15,7 +17,7 @@ PAGE_SIZE = 30
 
 
 def fetch_chat(
-	uuid: str,
+	uuid: UUID,
 	user: User = Depends(get_current_user),
 	db: Session = Depends(get_session)
 ):
@@ -35,7 +37,7 @@ def get_chats(
 
 @router.post('/', response_model=ChatRetrieve, status_code=HTTP_201_CREATED)
 def create_chat(
-	listing_uuid: str = Body(...),
+	listing_uuid: UUID = Body(...),
 	user: User = Depends(get_current_user),
 	db: Session = Depends(get_session)
 ):

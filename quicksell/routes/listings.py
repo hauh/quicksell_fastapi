@@ -1,5 +1,7 @@
 """api/listings/"""
 
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, Response
 from starlette.status import HTTP_201_CREATED, HTTP_204_NO_CONTENT
 
@@ -14,7 +16,7 @@ router = APIRouter(prefix='/listings', tags=['Listings'])
 PAGE_SIZE = 20
 
 
-def fetch_listing(uuid: str, db: Session = Depends(get_session)):
+def fetch_listing(uuid: UUID, db: Session = Depends(get_session)):
 	listing = db.query(Listing).filter(Listing.uuid == uuid).first()
 	if not listing:
 		raise NotFound("Listing not found")
@@ -28,7 +30,7 @@ def get_listings_list(  # pylint: disable=too-many-arguments
 	max_price: int = None,
 	is_new: bool = None,
 	category: str = None,
-	seller: str = None,
+	seller: UUID = None,
 	order_by: str = None,
 	page: int = 0,
 	db: Session = Depends(get_session)
@@ -114,7 +116,12 @@ def update_listing(
 	if listing.seller is not user.profile:
 		raise Forbidden()
 	params = body.dict()
-	for field, value in params.items():  # TODO: validate category
+	if category_name := params.get('category'):
+		category = db.query(Category).filter(Category.name == category_name).first()
+		if not category or not category.assignable:
+			raise BadRequest("Invalid category")
+		params['category'] = category
+	for field, value in params.items():
 		setattr(listing, field, value)
 	db.commit()
 	return listing

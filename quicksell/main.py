@@ -8,7 +8,8 @@ from quicksell.database import engine, session_maker
 from quicksell.models import Category, Model
 from quicksell.routes import chats_router, listings_router, users_router
 
-app = FastAPI(title="Quickell API", version='0.2.7')
+app = FastAPI(title="Quickell API", version='0.2.8')
+
 app.include_router(chats_router)
 app.include_router(listings_router)
 app.include_router(users_router)
@@ -21,14 +22,14 @@ def create_tables():
 
 @app.on_event('startup')
 def create_categories():
-	with session_maker(autoflush=True) as session:
-		session.query(Category).delete()
-		with open('categories.json', encoding='utf-8') as categories_file:
-			categories_json = json.load(categories_file)
-			for category in Category.tree_generator(categories_json):
-				session.add(category)
-				session.flush()
-		session.commit()
+	with session_maker() as session:
+		if not session.query(Category).first():
+			with open('assets/categories.json', encoding='utf-8') as categories_file:
+				categories_json = json.load(categories_file)
+				for category in Category.tree_generator(categories_json):
+					session.add(category)
+					session.flush()
+			session.commit()
 	Category.setup_events()
 
 

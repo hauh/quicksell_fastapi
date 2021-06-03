@@ -2,20 +2,18 @@
 
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import Column
-from sqlalchemy.sql import func
 from sqlalchemy.types import BigInteger, String, Text
 
-from .base import Model, UUIDColumn, association, foreign_key
+from .base import Model, UUIDMixin, association, foreign_key, sql_ts_now
 
 
-class Chat(Model):
+class Chat(Model, UUIDMixin):
 	"""User's chat."""
 
-	uuid = UUIDColumn()
 	listing_id = foreign_key('Listing', nullable=True, index=False)
 	last_message_id = foreign_key('Message', nullable=True, index=False)
 	subject = Column(String, nullable=False)
-	ts_update = Column(BigInteger, server_default=func.now(), onupdate=func.now())
+	ts_update = Column(BigInteger, server_default=sql_ts_now, onupdate=sql_ts_now)
 
 	members = association('Chat', 'Profile', back_populates='chats', lazy=False)
 	listing = relationship('Listing', back_populates=None, lazy=False)
