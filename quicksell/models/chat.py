@@ -4,14 +4,15 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.schema import Column
 from sqlalchemy.types import BigInteger, String, Text
 
-from .base import Model, UUIDMixin, association, foreign_key, sql_ts_now
+from .base import ColumnUUID, Model, association, foreign_key, sql_ts_now
 
 
-class Chat(Model, UUIDMixin):
+class Chat(Model):
 	"""User's chat."""
 
 	PAGE_SIZE = 20
 
+	uuid = ColumnUUID()
 	listing_id = foreign_key('Listing', nullable=True, index=False)
 	last_message_id = foreign_key('Message', nullable=True, index=False)
 	subject = Column(String, nullable=False)

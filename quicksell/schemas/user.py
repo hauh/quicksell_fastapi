@@ -5,13 +5,13 @@ from typing import Optional
 
 from pydantic import EmailStr
 
-from .base import RequestSchema, ResponseSchema
+from .base import HexUUID, RequestSchema, ResponseSchema
 
 
 class ProfileRetrieve(ResponseSchema):
 	"""Profile response schema."""
 
-	uuid: str
+	uuid: HexUUID
 	full_name: str
 	about: str
 	online: bool

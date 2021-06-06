@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import ForwardRef, Optional
 
-from .base import ResponseSchema
+from .base import HexUUID, ResponseSchema
 
 ProfileRetrieve = ForwardRef('ProfileRetrieve')
 
@@ -19,7 +19,7 @@ class MessageRetrieve(ResponseSchema):
 class ChatRetrieve(ResponseSchema):
 	"""Chat response schema."""
 
-	uuid: str
+	uuid: HexUUID
 	subject: str
 	ts_update: datetime
 	last_message: Optional[MessageRetrieve]

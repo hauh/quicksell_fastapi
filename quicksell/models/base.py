@@ -1,9 +1,9 @@
 """Base class of database models."""
 
+from functools import partial
 from uuid import uuid4
 
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import declarative_base, declared_attr, relationship
 from sqlalchemy.schema import Column, ForeignKey, Table
 from sqlalchemy.sql import func, select
@@ -12,6 +12,7 @@ from sqlalchemy.types import BigInteger, Float, Integer, String
 from quicksell.database import Database
 
 sql_ts_now = func.extract('epoch', func.now())
+ColumnUUID = partial(Column, UUID(as_uuid=True), nullable=False, default=uuid4)
 
 
 class Base:
@@ -56,20 +57,6 @@ class Base:
 
 
 Model = declarative_base(cls=Base, metadata=Database.metadata)
-
-
-class UUIDMixin:
-	"""Outside id of an object."""
-
-	_uuid = Column('uuid', UUID(as_uuid=True), nullable=False, default=uuid4)
-
-	@hybrid_property
-	def uuid(self):
-		return self._uuid.hex
-
-	@uuid.expression
-	def uuid(self):
-		return self._uuid
 
 
 class LocationMixin:

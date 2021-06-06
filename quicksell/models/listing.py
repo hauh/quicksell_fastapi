@@ -9,13 +9,13 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.schema import Column
 from sqlalchemy.types import BigInteger, Boolean, Enum, Integer, String, Text
 
-from .base import LocationMixin, Model, UUIDMixin, foreign_key, sql_ts_now
+from .base import ColumnUUID, LocationMixin, Model, foreign_key, sql_ts_now
 
 DEFAULT_LISTING_EXPIRY_TIME = timedelta(days=30).total_seconds()
 sql_ts_expires = sql_ts_now + DEFAULT_LISTING_EXPIRY_TIME
 
 
-class Listing(Model, UUIDMixin, LocationMixin):
+class Listing(Model, LocationMixin):
 	"""Listing model."""
 
 	PAGE_SIZE = 30
@@ -29,6 +29,7 @@ class Listing(Model, UUIDMixin, LocationMixin):
 		closed = 3, 'Closed'
 		deleted = 4, 'Deleted'
 
+	uuid = ColumnUUID()
 	seller_id = foreign_key('Profile', nullable=False)
 	category_id = foreign_key('Category', nullable=False)
 

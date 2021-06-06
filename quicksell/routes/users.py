@@ -7,9 +7,9 @@ from starlette.status import HTTP_201_CREATED
 from quicksell.authorization import (
 	check_password, generate_access_token, get_current_user, hash_password
 )
-from quicksell.exceptions import BadRequest, Unauthorized
+from quicksell.exceptions import BadRequest, NotFound, Unauthorized
 from quicksell.models import Device, Profile, User
-from quicksell.schemas import UserCreate, UserRetrieve
+from quicksell.schemas import HexUUID, UserCreate, UserRetrieve
 
 router = APIRouter(prefix='/users', tags=['Users'])
 
@@ -43,3 +43,11 @@ async def login(auth: OAuth2PasswordRequestForm = Depends()):
 		raise Unauthorized()
 	user.access_token = generate_access_token(auth.username)
 	return {'access_token': user.access_token}
+
+
+@router.get('/{uuid}/')
+async def get_profile(uuid: HexUUID):
+	profile = Profile.scalar(Profile.uuid == uuid)
+	if not profile:
+		raise NotFound("Profile not found")
+	return profile

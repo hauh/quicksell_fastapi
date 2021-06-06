@@ -1,6 +1,7 @@
 """API schemas."""
 
 from . import chat, listing, user
+from .base import HexUUID
 from .chat import ChatRetrieve, MessageRetrieve
 from .listing import ListingCreate, ListingRetrieve, ListingUpdate
 from .user import ProfileRetrieve, UserCreate, UserRetrieve

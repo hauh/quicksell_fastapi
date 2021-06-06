@@ -1,19 +1,17 @@
 """api/chats/"""
 
-from uuid import UUID
-
 from fastapi import APIRouter, Body, Depends, Response
 from starlette.status import HTTP_201_CREATED, HTTP_204_NO_CONTENT
 
 from quicksell.authorization import get_current_user
 from quicksell.exceptions import NotFound
 from quicksell.models import Chat, Listing, Message, User
-from quicksell.schemas import ChatRetrieve, MessageRetrieve
+from quicksell.schemas import ChatRetrieve, HexUUID, MessageRetrieve
 
 router = APIRouter(prefix='/chats', tags=['Chats'])
 
 
-async def fetch_chat(uuid: UUID, user: User = Depends(get_current_user)):
+async def fetch_chat(uuid: HexUUID, user: User = Depends(get_current_user)):
 	chat = Chat.scalar(Chat.uuid == uuid)
 	if not chat or user.profile not in chat.members:
 		raise NotFound("Chat not found")
@@ -29,7 +27,7 @@ async def get_chats(page: int = 0, user: User = Depends(get_current_user)):
 
 @router.post('/', response_model=ChatRetrieve, status_code=HTTP_201_CREATED)
 async def create_chat(
-	listing_uuid: UUID = Body(...),
+	listing_uuid: HexUUID = Body(...),
 	user: User = Depends(get_current_user)
 ):
 	listing = Listing.scalar(Listing.uuid == listing_uuid)

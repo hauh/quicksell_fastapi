@@ -1,19 +1,19 @@
 """api/listings/"""
 
-from uuid import UUID
-
 from fastapi import APIRouter, Depends, Response
 from starlette.status import HTTP_201_CREATED, HTTP_204_NO_CONTENT
 
 from quicksell.authorization import get_current_user
 from quicksell.exceptions import BadRequest, Forbidden, NotFound
 from quicksell.models import Category, Listing, Profile, User
-from quicksell.schemas import ListingCreate, ListingRetrieve, ListingUpdate
+from quicksell.schemas import (
+	HexUUID, ListingCreate, ListingRetrieve, ListingUpdate
+)
 
 router = APIRouter(prefix='/listings', tags=['Listings'])
 
 
-async def fetch_listing(uuid: UUID):
+async def fetch_listing(uuid: HexUUID):
 	listing = Listing.scalar(Listing.uuid == uuid)
 	if not listing:
 		raise NotFound("Listing not found")
@@ -27,7 +27,7 @@ async def get_listings_list(  # pylint: disable=too-many-arguments
 	max_price: int = None,
 	is_new: bool = None,
 	category: str = None,
-	seller: UUID = None,
+	seller: HexUUID = None,
 	order_by: str = None,
 	page: int = 0
 ):

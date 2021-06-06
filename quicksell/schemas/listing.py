@@ -7,7 +7,7 @@ from pydantic import validator
 
 from quicksell.models import Listing
 
-from .base import LocationSchema, RequestSchema, ResponseSchema
+from .base import HexUUID, LocationSchema, RequestSchema, ResponseSchema
 
 ProfileRetrieve = ForwardRef('ProfileRetrieve')
 
@@ -15,7 +15,7 @@ ProfileRetrieve = ForwardRef('ProfileRetrieve')
 class ListingRetrieve(ResponseSchema):
 	"""Listing response schema."""
 
-	uuid: str
+	uuid: HexUUID
 	state: Listing.State
 	ts_spawn: datetime
 	ts_expires: datetime
