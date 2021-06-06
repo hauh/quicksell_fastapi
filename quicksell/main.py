@@ -4,11 +4,11 @@ import json
 
 from fastapi import FastAPI
 
-from quicksell.database import engine, session_maker
-from quicksell.models import Category, Model
+from quicksell.database import Database
+from quicksell.models import Category
 from quicksell.routes import chats_router, listings_router, users_router
 
-app = FastAPI(title="Quickell API", version='0.2.8')
+app = FastAPI(title="Quickell API", version='0.3.0')
 
 app.include_router(chats_router)
 app.include_router(listings_router)
@@ -16,23 +16,27 @@ app.include_router(users_router)
 
 
 @app.on_event('startup')
-def create_tables():
-	Model.metadata.create_all(bind=engine)
+def init_db():
+	Database.connect()
+	Database.create_tables()
 
 
 @app.on_event('startup')
 def create_categories():
-	with session_maker() as session:
-		if not session.query(Category).first():
+	with Database.start_session():
+		if not Category.scalar():
 			with open('assets/categories.json', encoding='utf-8') as categories_file:
 				categories_json = json.load(categories_file)
-				for category in Category.tree_generator(categories_json):
-					session.add(category)
-					session.flush()
-			session.commit()
+				Category.populate_table(categories_json)
 	Category.setup_events()
 
 
+@app.middleware('http')
+async def db_session(request, call_next):
+	with Database.start_session():
+		return await call_next(request)
+
+
 @app.get('/', tags=['Info'])
-def main():
+async def main():
 	return "Quicksell API v0.2"

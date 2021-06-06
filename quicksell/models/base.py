@@ -3,12 +3,13 @@
 from uuid import uuid4
 
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import declarative_base, declared_attr, relationship
 from sqlalchemy.schema import Column, ForeignKey, Table
-from sqlalchemy.sql import func
+from sqlalchemy.sql import func, select
 from sqlalchemy.types import BigInteger, Float, Integer, String
+
+from quicksell.database import Database
 
 sql_ts_now = func.extract('epoch', func.now())
 
@@ -24,8 +25,37 @@ class Base:
 	id = Column(Integer, primary_key=True, index=True)
 	ts_spawn = Column(BigInteger, server_default=sql_ts_now)
 
+	@classmethod
+	def insert(cls, *args, **kwargs):
+		obj = cls(*args, **kwargs)
+		Database.session.add(obj)
+		Database.session.flush()
+		return obj
 
-Model = declarative_base(cls=Base)
+	@classmethod
+	def select(cls, *filters):
+		return Database.session.execute(select(cls).where(*filters)).scalars().all()
+
+	@classmethod
+	def scalar(cls, *filters):
+		return Database.session.execute(select(cls).filter(*filters)).scalar()
+
+	@classmethod
+	def paginate(cls, *filters, order_by=None, page=0):
+		return Database.session.execute(
+			select(cls).where(*filters).order_by(order_by)
+			.offset(page * cls.PAGE_SIZE).limit(cls.PAGE_SIZE)
+		).scalars().all()
+
+	def update(self, **kwargs):
+		for attribute, value in kwargs.items():
+			setattr(self, attribute, value)
+
+	def delete(self):
+		Database.session.delete(self)
+
+
+Model = declarative_base(cls=Base, metadata=Database.metadata)
 
 
 class UUIDMixin:

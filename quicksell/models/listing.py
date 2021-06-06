@@ -7,7 +7,7 @@ from sqlalchemy import event
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import Column
-from sqlalchemy.types import BigInteger, Boolean, Enum, Integer, String
+from sqlalchemy.types import BigInteger, Boolean, Enum, Integer, String, Text
 
 from .base import LocationMixin, Model, UUIDMixin, foreign_key, sql_ts_now
 
@@ -17,6 +17,8 @@ sql_ts_expires = sql_ts_now + DEFAULT_LISTING_EXPIRY_TIME
 
 class Listing(Model, UUIDMixin, LocationMixin):
 	"""Listing model."""
+
+	PAGE_SIZE = 30
 
 	class State(enum.Enum):
 		"""Listing's poissble states."""
@@ -34,7 +36,7 @@ class Listing(Model, UUIDMixin, LocationMixin):
 	ts_expires = Column(BigInteger, nullable=False, server_default=sql_ts_expires)
 
 	title = Column(String, nullable=False)
-	description = Column(String, nullable=False, default='')
+	description = Column(Text, nullable=False, default='')
 	price = Column(Integer, nullable=False, default=0)
 	is_new = Column(Boolean, nullable=False, default=False)
 	quantity = Column(Integer, nullable=False, default=1)
@@ -56,18 +58,17 @@ class Category(Model):
 	parent_id = foreign_key('Category')
 	assignable = Column(Boolean, nullable=False, default=False)
 
-	parent = relationship('Category')
+	parent = relationship('Category', uselist=False)
 
 	cached_tree = None
 
 	@staticmethod
-	def tree_generator(categories: dict, parent_id: int = None):
-		for name, children in categories.items():
-			subcategory = Category(
-				name=name, parent_id=parent_id, assignable=(not children)
+	def populate_table(categories: dict, parent_id: int = None):
+		for name, subcategories in categories.items():
+			category = Category.insert(
+				name=name, parent_id=parent_id, assignable=(not subcategories)
 			)
-			yield subcategory
-			yield from Category.tree_generator(children, subcategory.id)
+			Category.populate_table(subcategories, category.id)
 
 	@staticmethod
 	def setup_events():

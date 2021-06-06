@@ -10,6 +10,8 @@ from .base import Model, UUIDMixin, association, foreign_key, sql_ts_now
 class Chat(Model, UUIDMixin):
 	"""User's chat."""
 
+	PAGE_SIZE = 20
+
 	listing_id = foreign_key('Listing', nullable=True, index=False)
 	last_message_id = foreign_key('Message', nullable=True, index=False)
 	subject = Column(String, nullable=False)
@@ -31,13 +33,11 @@ class Chat(Model, UUIDMixin):
 		foreign_keys="[Message.chat_id]"
 	)
 
-	@classmethod
-	def about_listing(cls, listing):
-		return cls(listing=listing, subject=listing.title, members=[listing.seller])
-
 
 class Message(Model):
 	"""Message in Chat."""
+
+	PAGE_SIZE = 40
 
 	author_id = foreign_key('Profile')
 	chat_id = foreign_key('Chat')

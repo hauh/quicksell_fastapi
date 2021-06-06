@@ -6,80 +6,61 @@ from fastapi import APIRouter, Body, Depends, Response
 from starlette.status import HTTP_201_CREATED, HTTP_204_NO_CONTENT
 
 from quicksell.authorization import get_current_user
-from quicksell.database import Session, get_session
 from quicksell.exceptions import NotFound
 from quicksell.models import Chat, Listing, Message, User
 from quicksell.schemas import ChatRetrieve, MessageRetrieve
 
 router = APIRouter(prefix='/chats', tags=['Chats'])
 
-PAGE_SIZE = 30
 
-
-def fetch_chat(
-	uuid: UUID,
-	user: User = Depends(get_current_user),
-	db: Session = Depends(get_session)
-):
-	chat = db.query(Chat).filter(Chat.uuid == uuid).first()
+async def fetch_chat(uuid: UUID, user: User = Depends(get_current_user)):
+	chat = Chat.scalar(Chat.uuid == uuid)
 	if not chat or user.profile not in chat.members:
 		raise NotFound("Chat not found")
 	return chat
 
 
 @router.get('/', response_model=list[ChatRetrieve])
-def get_chats(
-	page: int = 0,
-	user: User = Depends(get_current_user),
-):
-	return user.profile.chats.offset(page * PAGE_SIZE).limit(PAGE_SIZE).all()
+async def get_chats(page: int = 0, user: User = Depends(get_current_user)):
+	return Chat.paginate(
+		Chat.members.has(user.profile), order_by=Chat.ts_update.desc(), page=page
+	)
 
 
 @router.post('/', response_model=ChatRetrieve, status_code=HTTP_201_CREATED)
-def create_chat(
+async def create_chat(
 	listing_uuid: UUID = Body(...),
-	user: User = Depends(get_current_user),
-	db: Session = Depends(get_session)
+	user: User = Depends(get_current_user)
 ):
-	listing = db.query(Listing).filter(Listing.uuid == listing_uuid).first()
+	listing = Listing.scalar(Listing.uuid == listing_uuid)
 	if not listing:
 		raise NotFound("Listing not found")
-	chat = user.profile.chats.filter(Chat.listing == listing).first()
-	if not chat:
-		chat = Chat.about_listing(listing)
-		if user.profile is not listing.seller:
-			chat.members.append(user.profile)
-		db.add(chat, listing.seller)
-		db.commit()
-	return chat
+	return (
+		Chat.scalar(Chat.listing == listing, Chat.members.has(user.profile))
+		or Chat.insert(
+			listing=listing, subject=listing.title,
+			members={user.profile, listing.seller}
+		)
+	)
 
 
 @router.get('/{uuid}/', response_model=list[MessageRetrieve])
-def get_chat_messages(
-	page: int = 0,
-	chat: Chat = Depends(fetch_chat)
-):
-	return chat.messages.offset(page * PAGE_SIZE).limit(PAGE_SIZE).all()
+async def get_chat_messages(page: int = 0, chat: Chat = Depends(fetch_chat)):
+	return Message.paginate(
+		Message.chat == chat, order_by=Message.ts_spawn.desc(), page=page
+	)
 
 
 @router.post('/{uuid}/', response_model=MessageRetrieve, status_code=HTTP_201_CREATED)  # noqa
-def create_message(
+async def create_message(
 	text: str = Body(...),
 	chat: Chat = Depends(fetch_chat),
-	user: User = Depends(get_current_user),
-	db: Session = Depends(get_session)
+	user: User = Depends(get_current_user)
 ):
-	message = Message(text=text, chat=chat, author=user.profile)
-	chat.last_message = message
-	db.add(message)
-	db.commit()
-	return message
+	chat.last_message = Message.insert(text=text, chat=chat, author=user.profile)
+	return chat.last_message
 
 
 @router.delete('/{uuid}/', response_class=Response, status_code=HTTP_204_NO_CONTENT)  # noqa
-def delete_chat(
-	chat: Chat = Depends(fetch_chat),
-	db: Session = Depends(get_session)
-):
-	db.delete(chat)
-	db.commit()
+async def delete_chat(chat: Chat = Depends(fetch_chat)):
+	chat.delete()
