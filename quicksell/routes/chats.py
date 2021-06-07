@@ -5,7 +5,7 @@ from starlette.status import HTTP_201_CREATED, HTTP_204_NO_CONTENT
 
 from quicksell.authorization import get_current_user
 from quicksell.exceptions import NotFound
-from quicksell.models import Chat, Listing, Message, User
+from quicksell.models import Chat, Listing, Message, Profile, User
 from quicksell.schemas import ChatRetrieve, HexUUID, MessageRetrieve
 
 router = APIRouter(prefix='/chats', tags=['Chats'])
@@ -21,7 +21,8 @@ async def fetch_chat(uuid: HexUUID, user: User = Depends(get_current_user)):
 @router.get('/', response_model=list[ChatRetrieve])
 async def get_chats(page: int = 0, user: User = Depends(get_current_user)):
 	return Chat.paginate(
-		Chat.members.has(user.profile), order_by=Chat.ts_update.desc(), page=page
+		Chat.members.any(Profile.id == user.profile.id),
+		order_by=Chat.ts_update.desc(), page=page
 	)
 
 

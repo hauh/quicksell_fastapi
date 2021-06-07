@@ -45,3 +45,14 @@ class NotFound(HTTPException):
 			detail or "Resource not found",
 			headers
 		)
+
+
+class Conflict(HTTPException):
+	"""409"""
+
+	def __init__(self, detail: str = None, headers: dict = None):
+		super().__init__(
+			status.HTTP_409_CONFLICT,
+			detail or "Resource already exists",
+			headers
+		)

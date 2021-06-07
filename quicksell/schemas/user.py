@@ -12,11 +12,12 @@ class ProfileRetrieve(ResponseSchema):
 	"""Profile response schema."""
 
 	uuid: HexUUID
-	full_name: str
+	name: str
+	phone: str
 	about: str
+	ts_spawn: datetime
 	online: bool
 	rating: int
-	phone: str
 	avatar: Optional[str]
 
 
@@ -25,7 +26,6 @@ class UserRetrieve(ResponseSchema):
 
 	email: str
 	is_email_verified: bool
-	ts_spawn: datetime
 	balance: int
 	profile: ProfileRetrieve
 	access_token: Optional[str]
@@ -36,6 +36,6 @@ class UserCreate(RequestSchema):
 
 	email: EmailStr
 	password: str
-	full_name: str
+	name: str
 	fcm_id: str
 	phone: str

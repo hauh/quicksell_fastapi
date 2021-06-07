@@ -7,7 +7,7 @@ from starlette.status import HTTP_201_CREATED
 from quicksell.authorization import (
 	check_password, generate_access_token, get_current_user, hash_password
 )
-from quicksell.exceptions import BadRequest, NotFound, Unauthorized
+from quicksell.exceptions import Conflict, NotFound, Unauthorized
 from quicksell.models import Device, Profile, User
 from quicksell.schemas import HexUUID, UserCreate, UserRetrieve
 
@@ -21,17 +21,17 @@ async def current_user(user: User = Depends(get_current_user)):
 
 @router.post('/', response_model=UserRetrieve, status_code=HTTP_201_CREATED)
 async def create_user(body: UserCreate):
-	if (
-		User.scalar(User.email == body.email)
-		or Profile.scalar(Profile.phone == body.phone)
-		or Device.scalar(Device.fcm_id == body.fcm_id)
-	):
-		raise BadRequest("User already exists")
+	if User.scalar(User.email == body.email):
+		raise Conflict("User with this email already exists")
+	if Profile.scalar(Profile.phone == body.phone):
+		raise Conflict("User with this phone number already exists")
+	# if Device.scalar(Device.fcm_id == body.fcm_id):
+	# 	raise Conflict("Registration from this device has already been done")
 	return User.insert(
 		email=body.email,
 		password_hash=hash_password(body.password),
 		access_token=generate_access_token(body.email),
-		profile=Profile(phone=body.phone, full_name=body.full_name),
+		profile=Profile(phone=body.phone, name=body.name),
 		device=Device(fcm_id=body.fcm_id)
 	)
 

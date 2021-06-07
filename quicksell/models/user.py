@@ -39,7 +39,7 @@ class Profile(Model, LocationMixin):
 	user_id = foreign_key('User')
 
 	phone = Column(String, unique=True, nullable=False, index=True)
-	full_name = Column(String, nullable=False)
+	name = Column(String, nullable=False)
 	about = Column(String, nullable=False, default='')
 
 	online = Column(Boolean, nullable=False, default=True)
