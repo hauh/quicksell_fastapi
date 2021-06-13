@@ -8,7 +8,13 @@ from quicksell.database import Database
 from quicksell.models import Category
 from quicksell.routes import chats_router, listings_router, users_router
 
-app = FastAPI(title="Quickell API", version='0.3.2')
+app = FastAPI(
+	title="Quickell API",
+	version='0.4.0',
+	openapi_url='/doc/openapi.json',
+	docs_url='/doc/swagger',
+	redoc_url='/doc/redoc'
+)
 
 app.include_router(chats_router)
 app.include_router(listings_router)
@@ -39,4 +45,4 @@ async def db_session(request, call_next):
 
 @app.get('/', tags=['Info'])
 async def main():
-	return "Quicksell API v0.2"
+	return f"{app.title} {app.version}"

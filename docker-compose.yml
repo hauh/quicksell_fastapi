@@ -1,0 +1,30 @@
+version: '3.9'
+
+services:
+
+  db:
+    image: postgres:alpine
+    container_name: quicksell_db
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    env_file: .env
+    restart: always
+
+  app:
+    build: .
+    image: quicksell
+    container_name: quicksell_app
+    command: gunicorn quicksell.main:app
+    expose:
+      - 8000
+    env_file: .env
+    restart: always
+    depends_on:
+      - db
+
+volumes:
+  db_data: {}
+
+networks:
+  default:
+    name: quicksell_network

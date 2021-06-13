@@ -25,7 +25,7 @@ async def push(device: Device, title=None, body=None, data=None):
 		if response['success'] != 1:
 			device.fails_count += 1
 			if device.fails_count >= Device.MAX_FAILS:
-				device.device.is_active = False
+				device.is_active = False
 		elif device.fails_count:
 			device.fails_count = 0
 

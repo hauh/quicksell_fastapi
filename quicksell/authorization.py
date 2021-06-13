@@ -13,7 +13,7 @@ from quicksell.models import User
 
 SECRET_KEY = environ['SECRET_KEY']
 
-authorization = OAuth2PasswordBearer(tokenUrl='/users/auth/')
+authorization = OAuth2PasswordBearer(tokenUrl='../users/auth/')
 
 
 def hash_password(password: str) -> str:

@@ -25,8 +25,8 @@ async def create_user(body: UserCreate):
 		raise Conflict("User with this email already exists")
 	if Profile.scalar(Profile.phone == body.phone):
 		raise Conflict("User with this phone number already exists")
-	# if Device.scalar(Device.fcm_id == body.fcm_id):
-	# 	raise Conflict("Registration from this device has already been done")
+	if Device.scalar(Device.fcm_id == body.fcm_id):
+		raise Conflict("Registration from this device has already been done")
 	return User.insert(
 		email=body.email,
 		password_hash=hash_password(body.password),
