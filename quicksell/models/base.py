@@ -46,7 +46,7 @@ class Base:
 		return Database.session.execute(
 			select(cls).where(*filters).order_by(order_by)
 			.offset(page * cls.PAGE_SIZE).limit(cls.PAGE_SIZE)
-		).scalars().all()
+		).scalars().unique().all()
 
 	def update(self, **kwargs):
 		for attribute, value in kwargs.items():

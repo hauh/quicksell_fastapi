@@ -6,6 +6,7 @@ from starlette.status import HTTP_201_CREATED, HTTP_204_NO_CONTENT
 from quicksell.authorization import get_current_user
 from quicksell.exceptions import NotFound
 from quicksell.models import Chat, Listing, Message, Profile, User
+from quicksell.notifications import notify_chat_members
 from quicksell.schemas import ChatRetrieve, HexUUID, MessageRetrieve
 
 router = APIRouter(prefix='/chats', tags=['Chats'])
@@ -35,10 +36,13 @@ async def create_chat(
 	if not listing:
 		raise NotFound("Listing not found")
 	return (
-		Chat.scalar(Chat.listing == listing, Chat.members.has(user.profile))
+		Chat.scalar(
+			Chat.listing == listing,
+			Chat.members.any(Profile.id == user.profile.id)
+		)
 		or Chat.insert(
 			listing=listing, subject=listing.title,
-			members={user.profile, listing.seller}
+			members=list({user.profile, listing.seller})
 		)
 	)
 
@@ -57,6 +61,7 @@ async def create_message(
 	user: User = Depends(get_current_user)
 ):
 	chat.last_message = Message.insert(text=text, chat=chat, author=user.profile)
+	await notify_chat_members(chat)
 	return chat.last_message
 
 

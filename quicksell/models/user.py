@@ -64,6 +64,8 @@ class Profile(Model, LocationMixin):
 class Device(Model):
 	"""User's device model."""
 
+	MAX_FAILS = 5
+
 	class Platform(enum.Enum):
 		"""Device platform."""
 
