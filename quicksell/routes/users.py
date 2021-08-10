@@ -5,17 +5,19 @@ from fastapi.security import OAuth2PasswordRequestForm
 from starlette.status import HTTP_201_CREATED
 
 from quicksell.authorization import (
-	check_password, generate_access_token, get_current_user, hash_password
+	check_password, generate_access_token, hash_password
 )
-from quicksell.exceptions import Conflict, NotFound, Unauthorized
+from quicksell.exceptions import Conflict, Unauthorized
 from quicksell.models import Device, Profile, User
-from quicksell.schemas import HexUUID, UserCreate, UserRetrieve
+from quicksell.schemas import UserCreate, UserRetrieve
+
+from .base import current_user, fetch
 
 router = APIRouter(prefix='/users', tags=['Users'])
 
 
 @router.get('/', response_model=UserRetrieve)
-async def current_user(user: User = Depends(get_current_user)):
+async def get_current_user(user: User = Depends(current_user)):
 	return user
 
 
@@ -46,8 +48,5 @@ async def login(auth: OAuth2PasswordRequestForm = Depends()):
 
 
 @router.get('/{uuid}/')
-async def get_profile(uuid: HexUUID):
-	profile = Profile.scalar(Profile.uuid == uuid)
-	if not profile:
-		raise NotFound("Profile not found")
+async def get_profile(profile: Profile = Depends(fetch(Profile))):
 	return profile

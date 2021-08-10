@@ -34,6 +34,9 @@ class Chat(Model):
 		foreign_keys="[Message.chat_id]"
 	)
 
+	def allowed(self, user):
+		return user.profile in self.members
+
 
 class Message(Model):
 	"""Message in Chat."""

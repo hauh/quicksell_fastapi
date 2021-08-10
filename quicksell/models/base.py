@@ -35,11 +35,13 @@ class Base:
 
 	@classmethod
 	def select(cls, *filters):
-		return Database.session.execute(select(cls).where(*filters)).scalars().all()
+		return Database.session.execute(
+			select(cls).where(*filters)
+		).scalars().unique().all()
 
 	@classmethod
 	def scalar(cls, *filters):
-		return Database.session.execute(select(cls).filter(*filters)).scalar()
+		return Database.session.execute(select(cls).where(*filters)).scalar()
 
 	@classmethod
 	def paginate(cls, *filters, order_by=None, page=0):
@@ -51,6 +53,7 @@ class Base:
 	def update(self, **kwargs):
 		for attribute, value in kwargs.items():
 			setattr(self, attribute, value)
+		Database.session.flush()
 
 	def delete(self):
 		Database.session.delete(self)

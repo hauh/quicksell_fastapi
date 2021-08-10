@@ -30,6 +30,7 @@ class User(Model):
 		'Profile', back_populates='user', lazy=False, uselist=False
 	)
 	device = relationship('Device', back_populates='owner', uselist=False)
+	company = relationship('Company', back_populates='owner', uselist=False)
 
 
 class Profile(Model, LocationMixin):

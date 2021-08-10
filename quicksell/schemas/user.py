@@ -1,11 +1,13 @@
 """Users related API schemas."""
 
 from datetime import datetime
-from typing import Optional
+from typing import ForwardRef, Optional
 
 from pydantic import EmailStr
 
 from .base import HexUUID, RequestSchema, ResponseSchema
+
+CompanyRetrieve = ForwardRef('CompanyRetrieve')
 
 
 class ProfileRetrieve(ResponseSchema):
@@ -29,6 +31,7 @@ class UserRetrieve(ResponseSchema):
 	balance: int
 	profile: ProfileRetrieve
 	access_token: Optional[str]
+	company: Optional[CompanyRetrieve]
 
 
 class UserCreate(RequestSchema):

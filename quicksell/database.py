@@ -55,7 +55,6 @@ class Database:
 			session.commit()
 		except SQLAlchemyError:
 			session.rollback()
-			raise
 		finally:
 			session.close()
 			session_context.reset(token)

@@ -51,6 +51,9 @@ class Listing(Model, LocationMixin):
 	seller = relationship('Profile', lazy=False)
 	category = relationship('Category', lazy=False)
 
+	def allowed(self, user):
+		return user.profile is self.seller
+
 
 class Category(Model):
 	"""Listings category model."""

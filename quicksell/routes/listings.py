@@ -3,21 +3,15 @@
 from fastapi import APIRouter, Depends, Response
 from starlette.status import HTTP_201_CREATED, HTTP_204_NO_CONTENT
 
-from quicksell.authorization import get_current_user
-from quicksell.exceptions import BadRequest, Forbidden, NotFound
+from quicksell.exceptions import BadRequest
 from quicksell.models import Category, Listing, Profile, User
 from quicksell.schemas import (
 	HexUUID, ListingCreate, ListingRetrieve, ListingUpdate
 )
 
+from .base import current_user, fetch, fetch_allowed
+
 router = APIRouter(prefix='/listings', tags=['Listings'])
-
-
-async def fetch_listing(uuid: HexUUID):
-	listing = Listing.scalar(Listing.uuid == uuid)
-	if not listing:
-		raise NotFound("Listing not found")
-	return listing
 
 
 @router.get('/', response_model=list[ListingRetrieve])
@@ -58,7 +52,7 @@ async def get_listings_list(  # pylint: disable=too-many-arguments
 @router.post('/', response_model=ListingRetrieve, status_code=HTTP_201_CREATED)
 async def create_listing(
 	body: ListingCreate,
-	user: User = Depends(get_current_user)
+	user: User = Depends(current_user)
 ):
 	params = body.dict()
 	location = params.pop('location', user.profile.location)
@@ -92,18 +86,15 @@ async def categories_tree():
 
 
 @router.get('/{uuid}/', response_model=ListingRetrieve)
-async def get_listing(listing: Listing = Depends(fetch_listing)):
+async def get_listing(listing: Listing = Depends(fetch(Listing))):
 	return listing
 
 
 @router.patch('/{uuid}/', response_model=ListingRetrieve)
 async def update_listing(
 	body: ListingUpdate,
-	listing: Listing = Depends(fetch_listing),
-	user: User = Depends(get_current_user)
+	listing: Listing = Depends(fetch_allowed(Listing))
 ):
-	if listing.seller is not user.profile:
-		raise Forbidden()
 	params = body.dict()
 	if category_name := params.get('category'):
 		category = Category.scalar(Category.name == category_name)
@@ -115,10 +106,5 @@ async def update_listing(
 
 
 @router.delete('/{uuid}/', response_class=Response, status_code=HTTP_204_NO_CONTENT)  # noqa
-async def delete_listing(
-	listing: Listing = Depends(fetch_listing),
-	user: User = Depends(get_current_user)
-):
-	if listing.seller is not user.profile:
-		raise Forbidden()
+async def delete_listing(listing: Listing = Depends(fetch_allowed(Listing))):
 	listing.delete()
