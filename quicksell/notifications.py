@@ -39,5 +39,5 @@ async def notify_chat_members(chat: Chat):
 		'message': MessageRetrieve.from_orm(message).json()
 	}
 	for profile in chat.members:
-		if profile is not message.author:
+		if profile is not message.author and profile.user.device:
 			await push(profile.user.device, title, message.text, data)
