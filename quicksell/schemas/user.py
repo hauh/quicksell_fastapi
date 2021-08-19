@@ -23,6 +23,15 @@ class ProfileRetrieve(ResponseSchema):
 	avatar: Optional[str]
 
 
+class ProfileUpdate(RequestSchema):
+	"""Profile update schema."""
+
+	name: Optional[str]
+	phone: Optional[str]
+	about: Optional[str]
+	avatar: Optional[str]
+
+
 class UserRetrieve(ResponseSchema):
 	"""User response schema."""
 

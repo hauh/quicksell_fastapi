@@ -7,11 +7,13 @@ from starlette.status import HTTP_201_CREATED
 from quicksell.authorization import (
 	check_password, generate_access_token, hash_password
 )
-from quicksell.exceptions import Conflict, Unauthorized
-from quicksell.models import Device, Profile, User
-from quicksell.schemas import UserCreate, UserRetrieve
+from quicksell.exceptions import Unauthorized
+from quicksell.models import Profile, User
+from quicksell.schemas import (
+	ProfileRetrieve, ProfileUpdate, UserCreate, UserRetrieve
+)
 
-from .base import current_user, fetch
+from .base import current_user, fetch, unique_violation_check
 
 router = APIRouter(prefix='/users', tags=['Users'])
 
@@ -23,20 +25,22 @@ async def get_current_user(user: User = Depends(current_user)):
 
 @router.post('/', response_model=UserRetrieve, status_code=HTTP_201_CREATED)
 async def create_user(body: UserCreate):
-	if User.scalar(User.email == body.email):
-		raise Conflict("User with this email already exists")
-	if Profile.scalar(Profile.phone == body.phone):
-		raise Conflict("User with this phone number already exists")
-	if Device.scalar(Device.fcm_id == body.fcm_id):
-		# raise Conflict("Registration from this device has already been done")
-		pass
-	return User.insert(
-		email=body.email,
-		password_hash=hash_password(body.password),
-		access_token=generate_access_token(body.email),
-		profile=Profile(phone=body.phone, name=body.name),
-		# device=Device(fcm_id=body.fcm_id)
-	)
+	with unique_violation_check():
+		return User.insert(
+			email=body.email,
+			password_hash=hash_password(body.password),
+			access_token=generate_access_token(body.email),
+			profile=Profile(phone=body.phone, name=body.name),
+		)
+
+
+@router.patch('/', response_model=ProfileRetrieve)
+async def update_profile(
+	body: ProfileUpdate,
+	user: User = Depends(current_user)
+):
+	with unique_violation_check():
+		return user.profile.update(**body.dict())
 
 
 @router.post('/auth/')

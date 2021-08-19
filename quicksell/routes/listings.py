@@ -101,8 +101,7 @@ async def update_listing(
 		if not category or not category.assignable:
 			raise BadRequest("Invalid category")
 		params['category'] = category
-	listing.update(**params)
-	return listing
+	return listing.update(**params)
 
 
 @router.delete('/{uuid}/', response_class=Response, status_code=HTTP_204_NO_CONTENT)  # noqa

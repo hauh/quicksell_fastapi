@@ -38,7 +38,10 @@ class Company(Model):
 
 	name = Column(String, unique=True, nullable=False)
 	form = Column(Enum(Form), nullable=False)
-	tin = Column(BigInteger, unique=True, nullable=False)
+	tin = Column(
+		BigInteger, unique=True, nullable=False,
+		doc='Taxpayer Identification Number'
+	)
 
 	address = Column(String, nullable=False)
 	phone = Column(String)

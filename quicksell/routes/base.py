@@ -1,12 +1,13 @@
 """Routes helpers."""
 
+from contextlib import contextmanager
 from typing import Type
 
 from fastapi import Depends
 
 from quicksell.authorization import authorization
-from quicksell.exceptions import Forbidden, NotFound, Unauthorized
-from quicksell.models import User
+from quicksell.exceptions import Conflict, Forbidden, NotFound, Unauthorized
+from quicksell.models import UniqueViolation, User
 from quicksell.schemas import HexUUID
 
 
@@ -33,3 +34,11 @@ def fetch_allowed(cls: Type):
 			raise Forbidden()
 		return obj
 	return fetch_object
+
+
+@contextmanager
+def unique_violation_check():
+	try:
+		yield
+	except UniqueViolation as e:
+		raise Conflict(str(e)) from e

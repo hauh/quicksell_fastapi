@@ -1,7 +1,6 @@
 """api/shops/"""
 
 from fastapi import APIRouter, Depends
-from sqlalchemy.exc import IntegrityError
 from starlette.status import HTTP_201_CREATED
 
 from quicksell.exceptions import BadRequest, Conflict
@@ -10,7 +9,7 @@ from quicksell.schemas import (
 	CompanyCreate, CompanyRetrieve, ShopCreate, ShopRetrieve
 )
 
-from .base import current_user, fetch
+from .base import current_user, fetch, unique_violation_check
 
 router = APIRouter(prefix='/shops', tags=['Shops'])
 
@@ -27,10 +26,8 @@ async def create_shop(
 ):
 	if not user.company:
 		raise BadRequest("User doesn't have a company")
-	try:
+	with unique_violation_check():
 		return Shop.insert(**body.dict(), company=user.company)
-	except IntegrityError as e:
-		raise Conflict(e.orig.diag.message_detail) from e
 
 
 @router.post('/companies/', response_model=CompanyRetrieve, status_code=HTTP_201_CREATED)  # noqa
@@ -40,10 +37,8 @@ async def create_company(
 ):
 	if user.company:
 		raise Conflict("User already has a company")
-	try:
+	with unique_violation_check():
 		return Company.insert(**body.dict(), owner=user)
-	except IntegrityError as e:
-		raise Conflict(e.orig.diag.message_detail) from e
 
 
 @router.get('/companies/{uuid}/', response_model=CompanyRetrieve)

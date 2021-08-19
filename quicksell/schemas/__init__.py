@@ -5,7 +5,7 @@ from .base import HexUUID
 from .chat import ChatRetrieve, MessageRetrieve
 from .listing import ListingCreate, ListingRetrieve, ListingUpdate
 from .shop import CompanyCreate, CompanyRetrieve, ShopCreate, ShopRetrieve
-from .user import ProfileRetrieve, UserCreate, UserRetrieve
+from .user import ProfileRetrieve, ProfileUpdate, UserCreate, UserRetrieve
 
 chat.ProfileRetrieve = ProfileRetrieve
 listing.ProfileRetrieve = ProfileRetrieve

@@ -3,8 +3,11 @@
 from functools import partial
 from uuid import uuid4
 
+from psycopg2.errorcodes import UNIQUE_VIOLATION
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import declarative_base, declared_attr, relationship
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.declarative import as_declarative
+from sqlalchemy.orm import declared_attr, relationship
 from sqlalchemy.schema import Column, ForeignKey, Table
 from sqlalchemy.sql import func, select
 from sqlalchemy.types import BigInteger, Float, Integer, String
@@ -15,7 +18,24 @@ sql_ts_now = func.extract('epoch', func.now())
 ColumnUUID = partial(Column, UUID(as_uuid=True), nullable=False, default=uuid4)
 
 
-class Base:
+class UniqueViolation(Exception):
+	"""PostgreSQL unique constraint violation error."""
+
+	def __init__(self, pg_exception_details):
+		super().__init__()
+		key, value = pg_exception_details.message_detail.split(')=(')
+		self.value = value[:value.find(')')]
+		key = key[key.find('(') + 1:]
+		self.table = pg_exception_details.table_name
+		column = Database.metadata.tables[self.table].columns[key]
+		self.column = column.doc or column.name
+
+	def __str__(self):
+		return f"{self.table} with {self.column} '{self.value}' already exists"
+
+
+@as_declarative(metadata=Database.metadata)
+class Model:
 	"""Base model class."""
 	# pylint: disable=no-self-argument, no-member
 
@@ -26,12 +46,19 @@ class Base:
 	id = Column(Integer, primary_key=True, index=True)
 	ts_spawn = Column(BigInteger, server_default=sql_ts_now)
 
+	def save(self):
+		try:
+			Database.session.add(self)
+			Database.session.flush()
+		except IntegrityError as e:
+			if e.orig.pgcode != UNIQUE_VIOLATION:
+				raise
+			raise UniqueViolation(e.orig.diag) from e
+		return self
+
 	@classmethod
 	def insert(cls, *args, **kwargs):
-		obj = cls(*args, **kwargs)
-		Database.session.add(obj)
-		Database.session.flush()
-		return obj
+		return cls(*args, **kwargs).save()
 
 	@classmethod
 	def select(cls, *filters):
@@ -53,13 +80,10 @@ class Base:
 	def update(self, **kwargs):
 		for attribute, value in kwargs.items():
 			setattr(self, attribute, value)
-		Database.session.flush()
+		return self.save()
 
 	def delete(self):
 		Database.session.delete(self)
-
-
-Model = declarative_base(cls=Base, metadata=Database.metadata)
 
 
 class LocationMixin:
@@ -88,7 +112,7 @@ class LocationMixin:
 
 def association(table_from, table_to, **kwargs):
 	table_name = 'Association{}{}'.format(*sorted((table_from, table_to)))
-	table = Model.metadata.tables.get(table_name)
+	table = Database.metadata.tables.get(table_name)
 	if table is None:
 		columns = [
 			Column(
@@ -98,7 +122,7 @@ def association(table_from, table_to, **kwargs):
 			)
 			for associated_table_name in (table_from, table_to)
 		]
-		table = Table(table_name, Model.metadata, *columns)
+		table = Table(table_name, Database.metadata, *columns)
 	return relationship(table_to, secondary=table, **kwargs)
 
 
