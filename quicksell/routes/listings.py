@@ -26,8 +26,8 @@ async def get_listings_list(  # pylint: disable=too-many-arguments
 	page: int = 0
 ):
 	filters = []
-	if title and len(title) > 3:
-		filters.append(Listing.title.like(f'%{title}%'))
+	if title and len(title) >= 3:
+		filters.append(Listing.title.ilike(f'%{title}%'))
 	if min_price is not None and min_price >= 0:
 		filters.append(Listing.price >= min_price)
 	if max_price is not None and max_price >= 0:
