@@ -1,10 +1,12 @@
 """api/listings/"""
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Request, Response
 from starlette.status import HTTP_201_CREATED, HTTP_204_NO_CONTENT
 
 from quicksell.exceptions import BadRequest
-from quicksell.models import Category, Listing, Profile, User
+from quicksell.models import (
+	Category, Listing, Profile, UniqueViolation, User, View
+)
 from quicksell.schemas import (
 	HexUUID, ListingCreate, ListingRetrieve, ListingUpdate
 )
@@ -86,7 +88,17 @@ async def categories_tree():
 
 
 @router.get('/{uuid}/', response_model=ListingRetrieve)
-async def get_listing(listing: Listing = Depends(fetch(Listing))):
+async def get_listing(
+	request: Request,
+	listing: Listing = Depends(fetch(Listing))
+):
+	ip = request.client.host
+	try:
+		View.insert(listing_id=listing.id, ip=ip)
+	except UniqueViolation:
+		pass
+	else:
+		listing.views += 1
 	return listing
 
 

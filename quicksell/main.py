@@ -9,7 +9,7 @@ from quicksell.routes import (
 
 app = FastAPI(
 	title="Quickell API",
-	version='0.6.1',
+	version='0.6.2',
 	openapi_url='/doc/openapi.json',
 	docs_url='/doc/swagger',
 	redoc_url='/doc/redoc'

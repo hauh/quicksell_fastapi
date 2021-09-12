@@ -25,10 +25,8 @@ class UniqueViolation(Exception):
 		super().__init__()
 		key, value = pg_exception_details.message_detail.split(')=(')
 		self.value = value[:value.find(')')]
-		key = key[key.find('(') + 1:]
+		self.column = key[key.find('(') + 1:]
 		self.table = pg_exception_details.table_name
-		column = Database.metadata.tables[self.table].columns[key]
-		self.column = column.doc or column.name
 
 	def __str__(self):
 		return f"{self.table} with {self.column} '{self.value}' already exists"
@@ -51,9 +49,10 @@ class Model:
 			Database.session.add(self)
 			Database.session.flush()
 		except IntegrityError as e:
-			if e.orig.pgcode != UNIQUE_VIOLATION:
-				raise
-			raise UniqueViolation(e.orig.diag) from e
+			Database.session.rollback()
+			if e.orig.pgcode == UNIQUE_VIOLATION:
+				raise UniqueViolation(e.orig.diag) from e
+			raise
 		return self
 
 	@classmethod

@@ -3,7 +3,7 @@
 import enum
 from datetime import timedelta
 
-from sqlalchemy import event
+from sqlalchemy import UniqueConstraint, event
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import Column
@@ -81,3 +81,12 @@ class Category(Model):
 		event.listen(Category, 'after_insert', clear_cache)
 		event.listen(Category, 'after_update', clear_cache)
 		event.listen(Category, 'after_delete', clear_cache)
+
+
+class View(Model):
+	"""Listing view model."""
+
+	__table_args__ = (UniqueConstraint('listing_id', 'ip'),)
+
+	listing_id = foreign_key('Listing', nullable=False)
+	ip = Column(String, nullable=False, index=True)
