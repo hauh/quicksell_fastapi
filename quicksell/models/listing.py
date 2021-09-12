@@ -67,12 +67,12 @@ class Category(Model):
 	cached_tree = None
 
 	@staticmethod
-	def populate_table(categories: dict, parent_id: int = None):
+	def populate(categories: dict, parent_id: int = None):
 		for name, subcategories in categories.items():
 			category = Category.insert(
 				name=name, parent_id=parent_id, assignable=(not subcategories)
 			)
-			Category.populate_table(subcategories, category.id)
+			Category.populate(subcategories, category.id)
 
 	@staticmethod
 	def setup_events():

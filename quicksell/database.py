@@ -1,10 +1,13 @@
-"""Database setup and connection."""
+"""Database manager."""
 
-
+import logging
 from contextlib import contextmanager
 from contextvars import ContextVar
 from os import environ
 
+from alembic.autogenerate import produce_migrations
+from alembic.migration import MigrationContext
+from alembic.operations import Operations, ops
 from sqlalchemy.engine import create_engine
 from sqlalchemy.exc import OperationalError, SQLAlchemyError
 from sqlalchemy.orm import sessionmaker
@@ -34,21 +37,23 @@ class Database:
 	session = Session()
 	metadata = MetaData()
 
-	@classmethod
-	def connect(cls):
-		cls.engine = create_engine(
+	@staticmethod
+	def connect():
+		Database.engine = create_engine(
 			Database.URI, connect_args=Database.CONNECT_ARGS, future=True
 		)
 		try:
-			cls.engine.connect()
+			Database.engine.connect()
 		except OperationalError as e:
 			raise TimeoutError("Database connection failed") from e
-		cls.sessionmaker = sessionmaker(cls.engine, autoflush=False, future=True)
+		Database.sessionmaker = sessionmaker(
+			Database.engine, autoflush=False, future=True
+		)
 
-	@classmethod
+	@staticmethod
 	@contextmanager
-	def start_session(cls):
-		session = cls.sessionmaker()
+	def start_session():
+		session = Database.sessionmaker()
 		token = session_context.set(session)
 		yield
 		try:
@@ -59,6 +64,27 @@ class Database:
 			session.close()
 			session_context.reset(token)
 
-	@classmethod
-	def create_tables(cls):
-		cls.metadata.create_all(bind=cls.engine)
+	@staticmethod
+	def migrate():
+		logging.info("Checking migrations...")
+		import quicksell.models  # required to fill metadata
+		Database.metadata.create_all(bind=Database.engine)
+		context = MigrationContext.configure(Database.engine.connect())
+		migrations = produce_migrations(context, Database.metadata)
+		if migrations.upgrade_ops.is_empty():
+			logging.info("No migrations detected")
+			return
+		logging.info("Migrating database...")
+		operations = Operations(context)
+		stack = [migrations.upgrade_ops]
+		with context.begin_transaction():
+			while stack:
+				op = stack.pop(0)
+				if isinstance(op, ops.DropTableOp):
+					logging.warning("Tables should be dropped manually")
+					continue
+				if isinstance(op, ops.OpContainer):
+					stack.extend(op.ops)
+				else:
+					operations.invoke(op)
+		logging.info("Migrations done")

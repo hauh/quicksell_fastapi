@@ -133,8 +133,9 @@ def association(table_from, table_to, **kwargs):
 	return relationship(table_to, secondary=table, **kwargs)
 
 
-def foreign_key(table_name, nullable=True, index=True):
+def foreign_key(table_name, index=True, **kwargs):
 	return Column(
-		Integer, ForeignKey(table_name + '.id'),
-		nullable=nullable, index=index
+		Integer,
+		ForeignKey(table_name + '.id', use_alter=True),
+		index=index, **kwargs
 	)
