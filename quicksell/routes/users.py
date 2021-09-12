@@ -1,16 +1,17 @@
 """api/users/"""
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Body, Depends, Response
 from fastapi.security import OAuth2PasswordRequestForm
-from starlette.status import HTTP_201_CREATED
+from starlette.status import HTTP_201_CREATED, HTTP_204_NO_CONTENT
 
 from quicksell.authorization import (
 	check_password, generate_access_token, hash_password
 )
 from quicksell.exceptions import Unauthorized
-from quicksell.models import Profile, User
+from quicksell.models import Listing, Profile, User
 from quicksell.schemas import (
-	ProfileRetrieve, ProfileUpdate, UserCreate, UserRetrieve
+	HexUUID, ListingRetrieve, ProfileRetrieve, ProfileUpdate, UserCreate,
+	UserRetrieve
 )
 
 from .base import current_user, fetch, unique_violation_check
@@ -50,6 +51,32 @@ async def login(auth: OAuth2PasswordRequestForm = Depends()):
 		raise Unauthorized()
 	user.access_token = generate_access_token(auth.username)
 	return {'access_token': user.access_token}
+
+
+@router.get('/favorites/', response_model=list[ListingRetrieve])
+async def get_favorites(user: User = Depends(current_user)):
+	return user.favorites
+
+
+@router.put('/favorites/', response_class=Response)
+async def add_to_favorites(
+	listing_uuid: HexUUID = Body(...),
+	user: User = Depends(current_user)
+):
+	listing = await fetch(Listing)(listing_uuid)
+	user.favorites.append(listing)
+
+
+@router.delete('/favorites/', response_class=Response, status_code=HTTP_204_NO_CONTENT)  # noqa
+async def remove_from_favorites(
+	listing_uuid: HexUUID = Body(...),
+	user: User = Depends(current_user)
+):
+	listing = await fetch(Listing)(listing_uuid)
+	try:
+		user.favorites.remove(listing)
+	except ValueError:
+		pass
 
 
 @router.get('/{uuid}/')

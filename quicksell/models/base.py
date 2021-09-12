@@ -44,7 +44,7 @@ class Model:
 		return cls.__name__
 
 	id = Column(Integer, primary_key=True, index=True)
-	ts_spawn = Column(BigInteger, server_default=sql_ts_now)
+	ts_spawn = Column(BigInteger, server_default=sql_ts_now, index=True)
 
 	def save(self):
 		try:
@@ -112,17 +112,24 @@ class LocationMixin:
 
 def association(table_from, table_to, **kwargs):
 	table_name = 'Association{}{}'.format(*sorted((table_from, table_to)))
+	if order_by := kwargs.get('order_by'):
+		kwargs['order_by'] = order_by.replace('self', table_name + '.c')
 	table = Database.metadata.tables.get(table_name)
 	if table is None:
-		columns = [
+		table = Table(
+			table_name, Database.metadata,
 			Column(
-				associated_table_name.lower() + '_id', Integer,
-				ForeignKey(associated_table_name + '.id'),
+				table_from.lower() + '_id', Integer,
+				ForeignKey(table_from + '.id'),
 				primary_key=True, index=True
-			)
-			for associated_table_name in (table_from, table_to)
-		]
-		table = Table(table_name, Database.metadata, *columns)
+			),
+			Column(
+				table_to.lower() + '_id', Integer,
+				ForeignKey(table_to + '.id'),
+				primary_key=True, index=True
+			),
+			Column('ts_spawn', BigInteger, server_default=sql_ts_now, index=True)
+		)
 	return relationship(table_to, secondary=table, **kwargs)
 
 

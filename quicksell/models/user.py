@@ -31,6 +31,11 @@ class User(Model):
 	)
 	device = relationship('Device', back_populates='owner', uselist=False)
 	company = relationship('Company', back_populates='owner', uselist=False)
+	favorites = association(
+		'User', 'Listing',
+		lazy=False,
+		order_by='desc(self.ts_spawn)'
+	)
 
 
 class Profile(Model, LocationMixin):
