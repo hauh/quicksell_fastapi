@@ -1,5 +1,6 @@
 """Base class of database models."""
 
+import math
 from functools import partial
 from uuid import uuid4
 
@@ -71,10 +72,15 @@ class Model:
 
 	@classmethod
 	def paginate(cls, *filters, order_by=None, page=0):
-		return Database.session.execute(
-			select(cls).where(*filters).order_by(order_by)
+		query = select(cls).where(*filters) \
 			.offset(page * cls.PAGE_SIZE).limit(cls.PAGE_SIZE)
-		).scalars().unique().all()
+		if order_by and isinstance(order_by, str):
+			order_col = cls.__table__.columns.get(order_by.removeprefix('-'))
+			if order_col is not None:
+				if order_by.startswith('-'):
+					order_col = order_col.desc()
+				query = query.order_by(order_col)
+		return Database.session.execute(query).scalars().unique().all()
 
 	def update(self, **kwargs):
 		for attribute, value in kwargs.items():
@@ -107,6 +113,33 @@ class LocationMixin:
 		self.latitude = location_dict['latitude']
 		self.longitude = location_dict['longitude']
 		self.address = location_dict['address']
+
+	@classmethod
+	def in_range(cls, latitude, longitude, radius):
+		latitude = math.radians(latitude)
+		longitude = math.radians(longitude)
+		expression = (func.acos(
+			func.sin(func.radians(cls.latitude)) * math.sin(latitude)
+			+ func.cos(func.radians(cls.latitude)) * math.cos(latitude)
+			* func.cos(func.radians(cls.longitude) - longitude)
+		) * 6378137).label('distance')
+		delta_lng = (180 / math.pi) * (radius / 6378137)
+		delta_lat = delta_lng / math.cos(latitude)
+		filt = (
+			cls.longitude.between(cls.longitude - delta_lng, cls.longitude + delta_lng)
+			& cls.latitude.between(cls.latitude - delta_lat, cls.latitude + delta_lat)
+			& (expression <= radius)
+		)
+		return filt, expression
+
+	@classmethod
+	def ordered_by_distance(cls, lat, lng, radius, *filters, desc, page=1):
+		range_filter, distance_expression = cls.in_range(lat, lng, radius)
+		return Database.session.execute(
+			select(cls, distance_expression).where(range_filter, *filters)
+			.order_by(distance_expression.desc() if desc else distance_expression)
+			.offset(page * cls.PAGE_SIZE).limit(cls.PAGE_SIZE)
+		).scalars().unique().all()
 
 
 def association(table_from, table_to, **kwargs):

@@ -17,14 +17,18 @@ router = APIRouter(prefix='/listings', tags=['Listings'])
 
 
 @router.get('/', response_model=list[ListingRetrieve])
-async def get_listings_list(  # pylint: disable=too-many-arguments
+async def get_listings_list(
+	# pylint: disable=too-many-arguments
 	title: str = None,
 	min_price: int = None,
 	max_price: int = None,
 	is_new: bool = None,
 	category: str = None,
 	seller: HexUUID = None,
-	order_by: str = None,
+	distance: int = None,
+	latitude: float = None,
+	longitude: float = None,
+	order_by: str = '-ts_spawn',
 	page: int = 0
 ):
 	filters = []
@@ -42,13 +46,14 @@ async def get_listings_list(  # pylint: disable=too-many-arguments
 	if seller:
 		join = (Listing.seller_id == Profile.id, Profile.uuid == seller)
 		filters.extend(join)
-
-	if order_by and (order := getattr(Listing, order_by.removeprefix('-'), None)):
-		order = order.desc() if order_by.startswith('-') else order.asc()
-	else:
-		order = Listing.ts_spawn.desc()
-
-	return Listing.paginate(*filters, order_by=order, page=page)
+	if distance and latitude and longitude:
+		if order_by.removeprefix('-') == 'distance':
+			return Listing.ordered_by_distance(
+				latitude, longitude, distance,
+				*filters, desc=order_by.startswith('-'), page=page
+			)
+		filters.append(Listing.in_range(latitude, longitude, distance)[0])
+	return Listing.paginate(*filters, order_by=order_by, page=page)
 
 
 @router.post('/', response_model=ListingRetrieve, status_code=HTTP_201_CREATED)
