@@ -53,6 +53,8 @@ class Database:
 	@staticmethod
 	@contextmanager
 	def start_session():
+		if not Database.engine:
+			Database.connect()
 		session = Database.sessionmaker()
 		token = session_context.set(session)
 		yield
@@ -67,6 +69,7 @@ class Database:
 	@staticmethod
 	def migrate():
 		logging.info("Checking migrations...")
+		# pylint: disable=import-outside-toplevel, unused-import
 		import quicksell.models  # required to fill metadata
 		Database.metadata.create_all(bind=Database.engine)
 		context = MigrationContext.configure(Database.engine.connect())

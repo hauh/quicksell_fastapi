@@ -6,7 +6,7 @@ from uvicorn.workers import UvicornWorker
 
 from quicksell.database import Database
 
-UvicornWorker.CONFIG_KWARGS['root_path'] = '/'
+UvicornWorker.CONFIG_KWARGS['root_path'] = '/api'
 
 bind = '0.0.0.0:8000'
 backlog = 2048
