@@ -54,25 +54,25 @@ async def login(auth: OAuth2PasswordRequestForm = Depends()):
 
 
 @router.get('/favorites/', response_model=list[ListingRetrieve])
-async def get_favorites(user: User = Depends(current_user)):
+async def get_favorite_listings(user: User = Depends(current_user)):
 	return user.favorites
 
 
 @router.put('/favorites/', response_class=Response)
-async def add_to_favorites(
-	listing_uuid: HexUUID = Body(...),
+async def favor_listing(
+	uuid: HexUUID = Body(..., embed=True),
 	user: User = Depends(current_user)
 ):
-	listing = await fetch(Listing)(listing_uuid)
+	listing = await fetch(Listing)(uuid)
 	user.favorites.append(listing)
 
 
 @router.delete('/favorites/', response_class=Response, status_code=HTTP_204_NO_CONTENT)  # noqa
-async def remove_from_favorites(
-	listing_uuid: HexUUID = Body(...),
+async def remove_listing_from_favorites(
+	uuid: HexUUID = Body(..., embed=True),
 	user: User = Depends(current_user)
 ):
-	listing = await fetch(Listing)(listing_uuid)
+	listing = await fetch(Listing)(uuid)
 	try:
 		user.favorites.remove(listing)
 	except ValueError:
