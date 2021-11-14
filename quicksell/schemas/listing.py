@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import ForwardRef, Optional
 
-from pydantic import validator
+from pydantic import conint, validator
 
 from quicksell.models import Listing
 
@@ -42,7 +42,7 @@ class ListingCreate(RequestSchema):
 
 	title: str
 	description: str
-	price: int
+	price: conint(ge=0)
 	is_new: bool
 	category: str
 	quantity: Optional[int]
@@ -54,7 +54,7 @@ class ListingUpdate(RequestSchema):
 
 	title: Optional[str]
 	description: Optional[str]
-	price: Optional[int]
+	price: Optional[conint(ge=0)]
 	is_new: Optional[bool]
 	category: Optional[str]
 	quantity: Optional[int]

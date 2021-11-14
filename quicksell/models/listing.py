@@ -50,6 +50,12 @@ class Listing(Model, LocationMixin):
 
 	seller = relationship('Profile', lazy=False)
 	category = relationship('Category', lazy=False)
+	offers = relationship(
+		'Offer',
+		back_populates='listing',
+		lazy=True,
+		cascade='all, delete-orphan'
+	)
 
 	def allowed(self, user):
 		return user.profile is self.seller

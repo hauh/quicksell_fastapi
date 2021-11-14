@@ -16,7 +16,9 @@ from sqlalchemy.types import BigInteger, Float, Integer, String
 from quicksell.database import Database
 
 sql_ts_now = func.extract('epoch', func.now())
-ColumnUUID = partial(Column, UUID(as_uuid=True), nullable=False, default=uuid4)
+ColumnUUID = partial(
+	Column, UUID(as_uuid=True), nullable=False, default=uuid4, index=True
+)
 
 
 class UniqueViolation(Exception):

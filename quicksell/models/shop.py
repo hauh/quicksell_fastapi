@@ -50,3 +50,4 @@ class Company(Model):
 
 	owner = relationship('User', back_populates='company')
 	shops = relationship('Shop', back_populates='company', lazy=False)
+	offers = relationship('Offer', back_populates='company', lazy=False)

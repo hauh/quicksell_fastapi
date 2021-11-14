@@ -18,18 +18,18 @@ async def current_user(token: str = Depends(authorization)) -> User:
 	return user
 
 
-def fetch(cls: Type):
+def fetch(cls: Type, *filters):
 	async def fetch_object(uuid: HexUUID):
-		obj = cls.scalar(cls.uuid == uuid)
+		obj = cls.scalar(cls.uuid == uuid, *filters)
 		if not obj:
 			raise NotFound(cls.__name__ + " not found")
 		return obj
 	return fetch_object
 
 
-def fetch_allowed(cls: Type):
+def fetch_allowed(cls: Type, *filters):
 	async def fetch_object(uuid: HexUUID, user: User = Depends(current_user)):
-		obj = await fetch(cls)(uuid)
+		obj = await fetch(cls, *filters)(uuid)
 		if not obj.allowed(user):
 			raise Forbidden()
 		return obj
