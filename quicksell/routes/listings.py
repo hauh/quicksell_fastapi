@@ -1,6 +1,6 @@
 """api/listings/"""
 
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Depends, Query, Request, Response
 from starlette.status import HTTP_201_CREATED, HTTP_204_NO_CONTENT
 
 from quicksell.exceptions import BadRequest
@@ -23,8 +23,8 @@ async def get_listings_list(
 	min_price: int = None,
 	max_price: int = None,
 	is_new: bool = None,
-	category: str = None,
-	seller: HexUUID = None,
+	category: list[str] = Query(None),
+	seller_uuid: HexUUID = None,
 	distance: int = None,
 	latitude: float = None,
 	longitude: float = None,
@@ -41,11 +41,11 @@ async def get_listings_list(
 	if is_new is not None:
 		filters.append(Listing.is_new == is_new)
 	if category:
-		join = (Listing.category_id == Category.id, Category.name == category)
-		filters.extend(join)
-	if seller:
-		join = (Listing.seller_id == Profile.id, Profile.uuid == seller)
-		filters.extend(join)
+		filters.append(Listing.category_id == Category.id)
+		filters.append(Category.name.in_(category))
+	if seller_uuid:
+		filters.append(Listing.seller_id == Profile.id)
+		filters.append(Profile.uuid == seller_uuid)
 	if distance and latitude and longitude:
 		if order_by.removeprefix('-') == 'distance':
 			return Listing.ordered_by_distance(
