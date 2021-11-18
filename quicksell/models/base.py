@@ -76,12 +76,15 @@ class Model:
 	def paginate(cls, *filters, order_by=None, page=0):
 		query = select(cls).where(*filters) \
 			.offset(page * cls.PAGE_SIZE).limit(cls.PAGE_SIZE)
-		if order_by and isinstance(order_by, str):
-			order_col = cls.__table__.columns.get(order_by.removeprefix('-'))
-			if order_col is not None:
-				if order_by.startswith('-'):
-					order_col = order_col.desc()
-				query = query.order_by(order_col)
+		if order_by is not None:
+			if isinstance(order_by, str):
+				order_col = cls.__table__.columns.get(order_by.removeprefix('-'))
+				if order_col is not None:
+					if order_by.startswith('-'):
+						order_col = order_col.desc()
+					query = query.order_by(order_col)
+			else:
+				query = query.order_by(order_by)
 		return Database.session.execute(query).scalars().unique().all()
 
 	def update(self, **kwargs):
