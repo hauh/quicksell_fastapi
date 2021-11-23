@@ -1,15 +1,16 @@
 """api/chats/"""
 
-from fastapi import APIRouter, Body, Depends, Response
+from fastapi import Body, Depends, Response
 from starlette.status import HTTP_201_CREATED, HTTP_204_NO_CONTENT
 
 from quicksell.models import Chat, Listing, Message, Profile, User
 from quicksell.notifications import notify_chat_members
+from quicksell.router import Router
 from quicksell.schemas import ChatRetrieve, HexUUID, MessageRetrieve
 
 from .base import current_user, fetch, fetch_allowed
 
-router = APIRouter(prefix='/chats', tags=['Chats'])
+router = Router(prefix='/chats', tags=['Chats'])
 
 
 @router.get('/', response_model=list[ChatRetrieve])

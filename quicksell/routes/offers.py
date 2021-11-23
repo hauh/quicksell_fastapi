@@ -1,15 +1,16 @@
 """api/offers/"""
 
-from fastapi import APIRouter, Body, Depends, Response
+from fastapi import Body, Depends, Response
 from starlette.status import HTTP_201_CREATED, HTTP_204_NO_CONTENT
 
 from quicksell.exceptions import BadRequest, Conflict, Forbidden
 from quicksell.models import Listing, Offer, User
+from quicksell.router import Router
 from quicksell.schemas import OfferCreate, OfferRetrieve, OfferUpdate
 
 from .base import current_user, fetch, fetch_allowed
 
-router = APIRouter(prefix='/offers', tags=['Offers'])
+router = Router(prefix='/offers', tags=['Offers'])
 
 
 @router.get('/', response_model=list[OfferRetrieve])

@@ -1,17 +1,18 @@
 """api/shops/"""
 
-from fastapi import APIRouter, Depends
+from fastapi import Depends
 from starlette.status import HTTP_201_CREATED
 
 from quicksell.exceptions import BadRequest, Conflict
 from quicksell.models import Company, Shop, User
+from quicksell.router import Router
 from quicksell.schemas import (
 	CompanyCreate, CompanyRetrieve, ShopCreate, ShopRetrieve
 )
 
 from .base import current_user, fetch, unique_violation_check
 
-router = APIRouter(prefix='/shops', tags=['Shops'])
+router = Router(prefix='/shops', tags=['Shops'])
 
 
 @router.get('/', response_model=list[ShopRetrieve])

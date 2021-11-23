@@ -1,6 +1,6 @@
 """api/users/"""
 
-from fastapi import APIRouter, Body, Depends, Response
+from fastapi import Body, Depends, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from starlette.status import HTTP_201_CREATED, HTTP_204_NO_CONTENT
 
@@ -9,6 +9,7 @@ from quicksell.authorization import (
 )
 from quicksell.exceptions import Unauthorized
 from quicksell.models import Listing, Profile, User
+from quicksell.router import Router
 from quicksell.schemas import (
 	HexUUID, ListingRetrieve, ProfileRetrieve, ProfileUpdate, UserCreate,
 	UserRetrieve
@@ -16,7 +17,7 @@ from quicksell.schemas import (
 
 from .base import current_user, fetch, unique_violation_check
 
-router = APIRouter(prefix='/users', tags=['Users'])
+router = Router(prefix='/users', tags=['Users'])
 
 
 @router.get('/', response_model=UserRetrieve)

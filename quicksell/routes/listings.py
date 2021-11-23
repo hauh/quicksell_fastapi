@@ -1,19 +1,20 @@
 """api/listings/"""
 
-from fastapi import APIRouter, Depends, Query, Request, Response
+from fastapi import Depends, Query, Request, Response
 from starlette.status import HTTP_201_CREATED, HTTP_204_NO_CONTENT
 
 from quicksell.exceptions import BadRequest
 from quicksell.models import (
 	Category, Listing, Profile, UniqueViolation, User, View
 )
+from quicksell.router import Router
 from quicksell.schemas import (
 	HexUUID, ListingCreate, ListingRetrieve, ListingUpdate
 )
 
 from .base import current_user, fetch, fetch_allowed
 
-router = APIRouter(prefix='/listings', tags=['Listings'])
+router = Router(prefix='/listings', tags=['Listings'])
 
 
 @router.get('/', response_model=list[ListingRetrieve])
