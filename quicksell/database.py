@@ -10,13 +10,27 @@ from alembic.migration import MigrationContext
 from alembic.operations import Operations, ops
 from sqlalchemy.engine import create_engine
 from sqlalchemy.exc import OperationalError, SQLAlchemyError
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.schema import MetaData
 
 session_context = ContextVar('session')
 
 
-class Session:
+class RetryingSession(Session):
+	"""Retries failed execution an logs exception."""
+
+	def execute(self, *args, retry=False, **kwargs):
+		try:
+			return super().execute(*args, **kwargs)
+		except OperationalError:
+			logging.exception("Execution failed")
+			if retry:
+				raise
+			logging.info("Retrying failed query")
+			return self.execute(*args, retry=True, **kwargs)
+
+
+class SessionGetter():
 	"""Get current session from ContextVar."""
 
 	def __get__(self, obj, objtype=None):
@@ -34,7 +48,7 @@ class Database:
 	)
 
 	engine = None
-	session = Session()
+	session = SessionGetter()
 	metadata = MetaData()
 
 	@staticmethod
@@ -47,7 +61,7 @@ class Database:
 		except OperationalError as e:
 			raise TimeoutError("Database connection failed") from e
 		Database.sessionmaker = sessionmaker(
-			Database.engine, autoflush=False, future=True
+			Database.engine, class_=RetryingSession, autoflush=False, future=True
 		)
 
 	@staticmethod
