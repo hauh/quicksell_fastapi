@@ -14,7 +14,7 @@ router = Router(prefix='/offers', tags=['Offers'])
 
 
 @router.get('/', response_model=list[OfferRetrieve])
-async def get_offers_list(user: User = Depends(current_user)):
+async def get_offers_list(user: User = Depends(current_user())):
 	if user.company:
 		where = [Offer.company == user.company]
 	else:
@@ -25,7 +25,7 @@ async def get_offers_list(user: User = Depends(current_user)):
 @router.post('/', response_model=OfferRetrieve, status_code=HTTP_201_CREATED)
 async def create_offer(
 	body: OfferCreate,
-	user: User = Depends(current_user)
+	user: User = Depends(current_user())
 ):
 	if not user.company:
 		raise BadRequest("You must register a company first")
@@ -56,7 +56,7 @@ async def update_offer(
 async def accept_offer(
 	accept: bool = Body(..., embed=True),
 	offer: Offer = Depends(fetch(Offer, Offer.active, Offer.accepted.is_(None))),
-	user: User = Depends(current_user)
+	user: User = Depends(current_user())
 ):
 	if user.profile is not offer.listing.seller:
 		raise Forbidden("Offer is not for you")

@@ -4,15 +4,15 @@ from fastapi import Body, Depends, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from starlette.status import HTTP_201_CREATED, HTTP_204_NO_CONTENT
 
-from quicksell.authorization import (
-	check_password, generate_access_token, hash_password
-)
 from quicksell.exceptions import Unauthorized
 from quicksell.models import Listing, Profile, User
 from quicksell.router import Router
 from quicksell.schemas import (
 	HexUUID, ListingRetrieve, ProfileRetrieve, ProfileUpdate, UserCreate,
 	UserRetrieve
+)
+from quicksell.security import (
+	check_password, generate_access_token, hash_password
 )
 
 from .base import current_user, fetch, unique_violation_check
@@ -21,7 +21,7 @@ router = Router(prefix='/users', tags=['Users'])
 
 
 @router.get('/', response_model=UserRetrieve)
-async def get_current_user(user: User = Depends(current_user)):
+async def get_current_user(user: User = Depends(current_user())):
 	return user
 
 
@@ -39,7 +39,7 @@ async def create_user(body: UserCreate):
 @router.patch('/', response_model=ProfileRetrieve)
 async def update_profile(
 	body: ProfileUpdate,
-	user: User = Depends(current_user)
+	user: User = Depends(current_user())
 ):
 	with unique_violation_check():
 		return user.profile.update(**body.dict())
@@ -55,14 +55,14 @@ async def login(auth: OAuth2PasswordRequestForm = Depends()):
 
 
 @router.get('/favorites/', response_model=list[ListingRetrieve])
-async def get_favorite_listings(user: User = Depends(current_user)):
+async def get_favorite_listings(user: User = Depends(current_user())):
 	return user.favorites
 
 
 @router.put('/favorites/', response_class=Response)
 async def favor_listing(
 	uuid: HexUUID = Body(..., embed=True),
-	user: User = Depends(current_user)
+	user: User = Depends(current_user())
 ):
 	listing = await fetch(Listing)(uuid)
 	user.favorites.append(listing)
@@ -71,7 +71,7 @@ async def favor_listing(
 @router.delete('/favorites/', response_class=Response, status_code=HTTP_204_NO_CONTENT)  # noqa
 async def remove_listing_from_favorites(
 	uuid: HexUUID = Body(..., embed=True),
-	user: User = Depends(current_user)
+	user: User = Depends(current_user())
 ):
 	listing = await fetch(Listing)(uuid)
 	try:

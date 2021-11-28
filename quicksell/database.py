@@ -54,7 +54,8 @@ class Database:
 	@staticmethod
 	def connect():
 		Database.engine = create_engine(
-			Database.URI, connect_args=Database.CONNECT_ARGS, future=True
+			Database.URI, connect_args=Database.CONNECT_ARGS,
+			pool_pre_ping=True, future=True
 		)
 		try:
 			Database.engine.connect()

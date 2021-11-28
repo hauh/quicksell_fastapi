@@ -3,7 +3,7 @@ version: '3.9'
 services:
 
   db:
-    image: postgres:alpine
+    image: postgres:13.5-alpine
     container_name: quicksell_db
     volumes:
       - db_data:/var/lib/postgresql/data

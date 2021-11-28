@@ -4,12 +4,9 @@ from os import environ
 from time import time
 
 import bcrypt
-from fastapi.security import OAuth2PasswordBearer
 from jose import jwt
 
 SECRET_KEY = environ['SECRET_KEY']
-
-authorization = OAuth2PasswordBearer(tokenUrl='../users/auth/')
 
 
 def hash_password(password: str) -> str:

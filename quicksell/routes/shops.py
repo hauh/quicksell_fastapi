@@ -23,7 +23,7 @@ async def get_shops_list():
 @router.post('/', response_model=ShopRetrieve, status_code=HTTP_201_CREATED)
 async def create_shop(
 	body: ShopCreate,
-	user: User = Depends(current_user)
+	user: User = Depends(current_user())
 ):
 	if not user.company:
 		raise BadRequest("User doesn't have a company")
@@ -34,7 +34,7 @@ async def create_shop(
 @router.post('/companies/', response_model=CompanyRetrieve, status_code=HTTP_201_CREATED)  # noqa
 async def create_company(
 	body: CompanyCreate,
-	user: User = Depends(current_user)
+	user: User = Depends(current_user())
 ):
 	if user.company:
 		raise Conflict("User already has a company")

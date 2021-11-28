@@ -16,7 +16,7 @@ router = Router(prefix='/chats', tags=['Chats'])
 @router.get('/', response_model=list[ChatRetrieve])
 async def get_chats(
 	page: int = 0,
-	user: User = Depends(current_user)
+	user: User = Depends(current_user())
 ):
 	return Chat.paginate(
 		Chat.members.any(Profile.id == user.profile.id),
@@ -27,7 +27,7 @@ async def get_chats(
 @router.post('/', response_model=ChatRetrieve, status_code=HTTP_201_CREATED)
 async def create_chat(
 	listing_uuid: HexUUID = Body(...),
-	user: User = Depends(current_user)
+	user: User = Depends(current_user())
 ):
 	listing = await fetch(Listing)(listing_uuid)
 	return (
@@ -56,7 +56,7 @@ async def get_chat_messages(
 async def create_message(
 	text: str = Body(...),
 	chat: Chat = Depends(fetch_allowed(Chat)),
-	user: User = Depends(current_user)
+	user: User = Depends(current_user())
 ):
 	chat.last_message = Message.insert(text=text, chat=chat, author=user.profile)
 	await notify_chat_members(chat)

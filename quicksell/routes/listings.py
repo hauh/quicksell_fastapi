@@ -1,5 +1,7 @@
 """api/listings/"""
 
+from time import time
+
 from fastapi import Depends, Query, Request, Response
 from starlette.status import HTTP_201_CREATED, HTTP_204_NO_CONTENT
 
@@ -20,6 +22,7 @@ router = Router(prefix='/listings', tags=['Listings'])
 @router.get('/', response_model=list[ListingRetrieve])
 async def get_listings_list(
 	# pylint: disable=too-many-arguments
+	user: User = Depends(current_user(required=False)),
 	title: str = None,
 	min_price: int = None,
 	max_price: int = None,
@@ -54,13 +57,18 @@ async def get_listings_list(
 				*filters, desc=order_by.startswith('-'), page=page
 			)
 		filters.append(Listing.in_range(latitude, longitude, distance)[0])
+	if not user or not user.company:
+		ts_filter = Listing.ts_spawn < int(time()) - Listing.PUBLICATION_DELAY
+		if user and not seller_uuid:
+			ts_filter |= Listing.seller_id == user.profile.id
+		filters.append(ts_filter)
 	return Listing.paginate(*filters, order_by=order_by, page=page)
 
 
 @router.post('/', response_model=ListingRetrieve, status_code=HTTP_201_CREATED)
 async def create_listing(
 	body: ListingCreate,
-	user: User = Depends(current_user)
+	user: User = Depends(current_user())
 ):
 	params = body.dict()
 	location = params.pop('location', user.profile.location)

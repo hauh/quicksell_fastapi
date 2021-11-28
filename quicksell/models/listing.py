@@ -19,6 +19,7 @@ class Listing(Model, LocationMixin):
 	"""Listing model."""
 
 	PAGE_SIZE = 30
+	PUBLICATION_DELAY = timedelta(hours=5).total_seconds()
 
 	class State(enum.Enum):
 		"""Listing's poissble states."""
