@@ -3,6 +3,7 @@
 from time import time
 
 from fastapi import Depends, Query, Request, Response
+from sqlalchemy import func
 from starlette.status import HTTP_201_CREATED, HTTP_204_NO_CONTENT
 
 from quicksell.exceptions import BadRequest
@@ -51,12 +52,11 @@ async def get_listings_list(
 		filters.append(Listing.seller_id == Profile.id)
 		filters.append(Profile.uuid == seller_uuid)
 	if distance and latitude and longitude:
-		if order_by.removeprefix('-') == 'distance':
-			return Listing.ordered_by_distance(
-				latitude, longitude, distance,
-				*filters, desc=order_by.startswith('-'), page=page
-			)
-		filters.append(Listing.in_range(latitude, longitude, distance)[0])
+		distance_column = (
+			func.pow(Listing.latitude - latitude, 2)
+			+ func.pow(Listing.longitude - longitude, 2)
+		).label('distance')
+		filters.append(distance_column <= distance ** 2)
 	if not user or not user.company:
 		ts_filter = Listing.ts_spawn < int(time()) - Listing.PUBLICATION_DELAY
 		if user and not seller_uuid:
