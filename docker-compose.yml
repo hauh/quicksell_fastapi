@@ -15,8 +15,7 @@ services:
     image: quicksell
     container_name: quicksell_app
     command: gunicorn quicksell.main:app
-    expose:
-      - 8000
+    ports: ['8000:8000']
     env_file: .env
     restart: always
     depends_on:

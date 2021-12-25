@@ -1,5 +1,7 @@
 """App main."""
 
+from os import environ
+
 from fastapi import FastAPI
 
 from quicksell.routes import (
@@ -11,7 +13,8 @@ app = FastAPI(
 	version='0.7.3',
 	openapi_url='/doc/openapi.json',
 	docs_url='/doc/swagger',
-	redoc_url='/doc/redoc'
+	redoc_url='/doc/redoc',
+	root_path=environ.get('ROOT_PATH', '')
 )
 
 app.include_router(chats_router)

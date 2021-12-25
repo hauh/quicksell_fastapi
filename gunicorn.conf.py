@@ -1,12 +1,10 @@
 """Gunicorn configuration file."""
 
+import json
 import multiprocessing
 
-from uvicorn.workers import UvicornWorker
-
 from quicksell.database import Database
-
-UvicornWorker.CONFIG_KWARGS['root_path'] = '/api'
+from quicksell.models import Category
 
 bind = '0.0.0.0:8000'
 backlog = 2048
@@ -21,3 +19,7 @@ accesslog = '-'
 def on_starting(_):
 	Database.connect()
 	Database.migrate()
+	with Database.start_session():
+		if not Database.session.query(Category).first():
+			with open('assets/categories.json', 'r', encoding='utf-8') as f:
+				Category.populate(json.loads(f.read()))
