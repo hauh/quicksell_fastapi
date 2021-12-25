@@ -4,12 +4,14 @@ import enum
 from datetime import timedelta
 
 from sqlalchemy import UniqueConstraint, event
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import Column
 from sqlalchemy.types import BigInteger, Boolean, Enum, Integer, String, Text
 
-from .base import ColumnUUID, LocationMixin, Model, foreign_key, sql_ts_now
+from .base import (
+	ColumnArray, ColumnJSON, ColumnUUID, LocationMixin, Model, foreign_key,
+	sql_ts_now
+)
 
 DEFAULT_LISTING_EXPIRY_TIME = timedelta(days=30).total_seconds()
 sql_ts_expires = sql_ts_now + DEFAULT_LISTING_EXPIRY_TIME
@@ -42,12 +44,12 @@ class Listing(Model, LocationMixin):
 	price = Column(Integer, nullable=False, default=0)
 	is_new = Column(Boolean, nullable=False, default=False)
 	quantity = Column(Integer, nullable=False, default=1)
-	properties = Column(JSONB)
+	properties = ColumnJSON()
 
 	sold = Column(Integer, nullable=False, default=0)
 	views = Column(Integer, nullable=False, default=0)
 
-	photos = Column(String)
+	photos = ColumnArray()
 
 	seller = relationship('Profile', lazy=False)
 	category = relationship('Category', lazy=False)

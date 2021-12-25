@@ -25,10 +25,10 @@ class ListingRetrieve(ResponseSchema):
 	is_new: bool
 	category: str
 	quantity: int
-	properties: Optional[str]
+	properties: dict
 	sold: int
 	views: int
-	photos: Optional[str]
+	photos: list[str]
 	location: Optional[LocationSchema]
 	seller: ProfileRetrieve
 

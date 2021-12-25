@@ -3,6 +3,7 @@
 from os import environ
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from quicksell.routes import (
 	chats_router, listings_router, offers_router, shops_router, users_router
@@ -22,6 +23,8 @@ app.include_router(listings_router)
 app.include_router(offers_router)
 app.include_router(shops_router)
 app.include_router(users_router)
+
+app.mount('/media', StaticFiles(directory='media'), name='media')
 
 
 @app.get('/', tags=['Info'])

@@ -1,12 +1,14 @@
 """api/listings/"""
 
+import os
 from time import time
+from uuid import uuid4
 
-from fastapi import Depends, Query, Request, Response
+from fastapi import Body, Depends, File, Query, Request, Response, UploadFile
 from sqlalchemy import func
 from starlette.status import HTTP_201_CREATED, HTTP_204_NO_CONTENT
 
-from quicksell.exceptions import BadRequest
+from quicksell.exceptions import BadRequest, NotFound
 from quicksell.models import (
 	Category, Listing, Profile, UniqueViolation, User, View
 )
@@ -133,3 +135,39 @@ async def update_listing(
 @router.delete('/{uuid}/', response_class=Response, status_code=HTTP_204_NO_CONTENT)  # noqa
 async def delete_listing(listing: Listing = Depends(fetch_allowed(Listing))):
 	listing.delete()
+	for filename in listing.photos:
+		try:
+			os.remove(f'media/{filename}')
+		except FileNotFoundError:
+			pass
+
+
+@router.post('/{uuid}/photos/', status_code=HTTP_201_CREATED)
+async def upload_photo(
+	file: UploadFile = File(...),
+	listing: Listing = Depends(fetch_allowed(Listing))
+):
+	if file.content_type not in ('image/jpg', 'image/png'):
+		raise BadRequest("Wrong file type")
+	filename = f"{uuid4().hex}.{file.content_type.split('/')[-1]}"
+	with open('media/' + filename, 'wb') as f:
+		f.write(await file.read())
+	listing.photos.append(filename)
+	listing.save()
+	return filename
+
+
+@router.delete('/{uuid}/photos/', response_class=Response, status_code=HTTP_204_NO_CONTENT)  # noqa
+async def delete_photo(
+	filename: str = Body(..., embed=True),
+	listing: Listing = Depends(fetch_allowed(Listing)),
+):
+	try:
+		listing.photos.remove(filename)
+	except ValueError as e:
+		raise NotFound("File not found") from e
+	listing.save()
+	try:
+		os.remove(f'media/{filename}')
+	except FileNotFoundError:
+		pass

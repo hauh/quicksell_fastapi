@@ -5,9 +5,10 @@ from functools import partial
 from uuid import uuid4
 
 from psycopg2.errorcodes import UNIQUE_VIOLATION
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import as_declarative
+from sqlalchemy.ext.mutable import MutableDict, MutableList
 from sqlalchemy.orm import declared_attr, relationship
 from sqlalchemy.schema import Column, ForeignKey, Table
 from sqlalchemy.sql import func, select
@@ -18,6 +19,12 @@ from quicksell.database import Database
 sql_ts_now = func.extract('epoch', func.now())
 ColumnUUID = partial(
 	Column, UUID(as_uuid=True), nullable=False, default=uuid4, index=True
+)
+ColumnArray = partial(
+	Column, MutableList.as_mutable(ARRAY(String)), server_default='{}'
+)
+ColumnJSON = partial(
+	Column, MutableDict.as_mutable(JSONB), server_default='{}'
 )
 
 
