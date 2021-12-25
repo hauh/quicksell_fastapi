@@ -14,6 +14,7 @@ offer.CompanyRetrieve = CompanyRetrieve
 offer.ListingRetrieve = ListingRetrieve
 user.ChatRetrieve = ChatRetrieve
 user.CompanyRetrieve = CompanyRetrieve
+user.ShopRetrieve = ShopRetrieve
 
 
 def update_forward_refs():

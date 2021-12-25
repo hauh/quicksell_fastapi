@@ -66,6 +66,10 @@ class Profile(Model, LocationMixin):
 		order_by='desc(Chat.ts_update)'
 	)
 
+	@property
+	def shops(self) -> list:
+		return self.user.company.shops if self.user.company else []
+
 
 class Device(Model):
 	"""User's device model."""

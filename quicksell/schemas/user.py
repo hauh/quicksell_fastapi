@@ -8,6 +8,7 @@ from pydantic import EmailStr
 from .base import HexUUID, RequestSchema, ResponseSchema
 
 CompanyRetrieve = ForwardRef('CompanyRetrieve')
+ShopRetrieve = ForwardRef('ShopRetrieve')
 
 
 class ProfileRetrieve(ResponseSchema):
@@ -21,6 +22,7 @@ class ProfileRetrieve(ResponseSchema):
 	online: bool
 	rating: int
 	avatar: Optional[str]
+	shops: list[ShopRetrieve]
 
 
 class ProfileUpdate(RequestSchema):
